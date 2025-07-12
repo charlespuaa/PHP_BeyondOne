@@ -98,18 +98,6 @@ while ($row = $result->fetch_assoc()) {
     .image-container:hover .main-img {
       opacity: 0;
     }
-    .heart-icon {
-      position: absolute;
-      top: 12px;
-      right: 12px;
-      font-size: 18px;
-      cursor: pointer;
-      color: #E6BD37;
-      transition: color 0.3s ease;
-    }
-    .heart-icon:hover {
-      color: red;
-    }
     .product-name {
       font-weight: bold;
       font-size: 15px;
@@ -179,7 +167,6 @@ while ($row = $result->fetch_assoc()) {
             <div class="image-container">
               <img src="../assets/<?=$product['image']?>" class="main-img" alt="<?=$product['name']?>">
               <img src="../assets/<?=$product['hover_image']?>" class="hover-img" alt="<?=$product['name']?>">
-              <div class="heart-icon">♡</div>
             </div>
             <div class="product-name"><?=$product['name']?></div>
             <div class="product-brand">Etier</div>
