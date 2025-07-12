@@ -8,7 +8,11 @@ $result = $conn->query($sql);
 $categories = [
   'Hats and Caps' => [],
   'Eyewear' => [],
+  'Tops' => [],
+  'Bottoms' => [],
+  'Accessories' => [],
   'Hand Bags' => [],
+  'Shoes' => [],
   'Fragrance' => []
 ];
 
@@ -137,6 +141,13 @@ while ($row = $result->fetch_assoc()) {
       bottom: 0;
       left: 0;
       z-index: 10;
+    }
+    #bottoms .product-card {
+        min-height: 550px; 
+        padding-bottom: 60px; 
+    }
+    #bottoms .image-container {
+        height: 500px; 
     }
     .product-card:hover .quickshop-container {
       opacity: 1;

@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Jul 12, 2025 at 10:34 AM
+-- Generation Time: Jul 12, 2025 at 11:47 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -72,13 +72,13 @@ INSERT INTO `products` (`id`, `name`, `description`, `category`, `size`, `has_si
 (25, 'Underground Polo Shirt', '100% Cotton with a front graphic design', 'Tops', 'XS', 1, 7008.03, 'tops/allsaints_front.png', 'tops/allsaints_back.png', 15),
 (26, 'Bait and Tackle Tee', '100% Cotton with a front graphic design', 'Tops', 'XS', 1, 2938.64, 'tops/bat_front.png', 'tops/bat_back.png', 15),
 (27, 'Berkley Pant', '100% cotton with adjustable belt and waistband', 'Bottoms', 'XS', 1, 8728.12, 'bottoms/berkley_front.png', 'bottoms/berkley_back.png', 7),
-(28, 'Riverbend Cargo Work Pant', '100% cotton with 4-pocket design cargo pockets', 'Bottoms', 'XS', 1, 3473.90, 'bottoms/cargo_front.png', 'bottoms/cargo_back.png', 20),
+(28, 'Track Pants', '100% nylon with drawstring closure', 'Bottoms', 'XS', 1, 3473.90, 'bottoms/track_front.png', 'bottoms/track_back.png', 20),
 (29, 'Monogram Chino Pant', '100% cotton with side seam pockets and back welt pockets', 'Bottoms', 'XS', 1, 6783.22, 'bottoms/chino_front.png', 'bottoms/chino_back.png', 10),
 (30, 'Morel Nicola Terry Short', '100% cotton with drawstring closure and elasic waistband', 'Bottoms', 'XS', 1, 5400.22, 'bottoms/terry_front.png', 'bottoms/terry_back.png', 15),
 (31, 'Underground Swim Shorts', '100% cotton with side pockets and single rear pocket', 'Bottoms', 'XS', 1, 6571.99, 'bottoms/swim_front.png', 'bottoms/swim_back.png', 15),
-(32, 'Polycarbon 37mm Watch', 'Polycarbonate case and strap with brass dial, indexes, and hands', 'Accessories', 'One Size', 0, 11000.20, 'accessories/polycarbon_front.png', 'accessories/polycarbon_back.png', 4),
+(32, 'Polycarbon 37mm Watch', 'Polycarbonate case and strap with brass dial, indexes, and hands', 'Accessories', 'One Size', 0, 11000.20, 'accessories/polycarbonwhite_front.png', 'accessories/polycarbonwhite_back.png', 4),
 (33, 'Leather Suffield Belt', '100% cowhide leather with silver-tone buckle closure', 'Accessories', 'One Size', 0, 4555.90, 'accessories/suffiled_front.png', 'accessories/suffiled_back.png', 10),
-(34, 'Striped Script Logo Socks', '80% cotton socks', 'Accessories', 'One Size', 0, 3000.90, 'accessories/socks_front.png', 'accessories/socks_back.png', 10),
+(34, 'Recycled Cotton Logo Socks', '80% cotton socks', 'Accessories', 'One Size', 0, 3000.90, 'accessories/creamsocks_front.png', 'accessories/sockscream_back.png', 10),
 (35, 'Cornet Ring', 'Gold-plated sterling silver', 'Accessories', 'One Size', 0, 5900.20, 'accessories/cornet_front.png', 'accessories/cprnet_back.png', 3);
 
 --
