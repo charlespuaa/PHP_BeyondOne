@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Jul 12, 2025 at 11:47 AM
+-- Generation Time: Jul 12, 2025 at 06:14 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -79,7 +79,12 @@ INSERT INTO `products` (`id`, `name`, `description`, `category`, `size`, `has_si
 (32, 'Polycarbon 37mm Watch', 'Polycarbonate case and strap with brass dial, indexes, and hands', 'Accessories', 'One Size', 0, 11000.20, 'accessories/polycarbonwhite_front.png', 'accessories/polycarbonwhite_back.png', 4),
 (33, 'Leather Suffield Belt', '100% cowhide leather with silver-tone buckle closure', 'Accessories', 'One Size', 0, 4555.90, 'accessories/suffiled_front.png', 'accessories/suffiled_back.png', 10),
 (34, 'Recycled Cotton Logo Socks', '80% cotton socks', 'Accessories', 'One Size', 0, 3000.90, 'accessories/creamsocks_front.png', 'accessories/sockscream_back.png', 10),
-(35, 'Cornet Ring', 'Gold-plated sterling silver', 'Accessories', 'One Size', 0, 5900.20, 'accessories/cornet_front.png', 'accessories/cprnet_back.png', 3);
+(35, 'Cornet Ring', 'Gold-plated sterling silver', 'Accessories', 'One Size', 0, 5900.20, 'accessories/cornetring_front.png', 'accessories/cornetring_back.png', 3),
+(36, 'Hybridge Lite Vest', '100% polyamide with two-way front zipper closure', 'Jackets', 'XS', 1, 29882.90, 'jackets/goose_front.png', 'jackets/goose_back.png', 11),
+(37, 'Rhett Jacket', '100% cotton with 4-pcoket styling', 'Jackets', 'XS', 1, 32412.20, 'jackets/rhett_front.png', 'jackets/rhett_back.png', 18),
+(38, 'Work Shirt', '100% polyester made from lightweight fleece fabric', 'Jackets', 'XS', 1, 7829.90, 'jackets/pattern_front.png', 'jackets/pattern_back.png', 8),
+(39, 'NYC Cafe Racer Jacket', '100% polyester made from heavyweight buttery leather fabric', 'Jackets', 'XS', 1, 45673.90, 'jackets/scholt_front.png', 'jackets/scholt_back.png', 23),
+(40, 'Mission Jacket', '100% cotton and 100% recycled polyester', 'Jackets', 'XS', 1, 8536.90, 'jackets/mission_front.png', 'jackets/mission_back.png', 21);
 
 --
 -- Indexes for dumped tables
@@ -99,7 +104,7 @@ ALTER TABLE `products`
 -- AUTO_INCREMENT for table `products`
 --
 ALTER TABLE `products`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=36;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=41;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
