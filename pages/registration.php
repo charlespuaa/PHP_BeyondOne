@@ -28,38 +28,37 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $city = $_POST['city'];
     $region = $_POST['region'];
     $username = $_POST['username'];
-    $password = $_POST['password']; 
+    $password = $_POST['password'];
+    $confirm_password = $_POST['confirm_password'];
     $email = $_POST['email'];
     $contact_number = $_POST['contact_number'];
-    $confirm_password = $_POST['confirm_password'];
 
-    // Check password match using regex (alphanumeric at least 6 chars example)
-    if (!preg_match("/^[A-Za-z0-9]{6,}$/", $password)) {
+    if (!preg_match("/^[A-Za-z0-9_]{3,20}$/", $username)) {
         echo "<div style='background:red;color:#fff;padding:10px;border-radius:5px;text-align:center;'>
-                Password must be at least 6 alphanumeric characters.
-              </div>";
+            Invalid username format.
+        </div>";
+    } elseif (!preg_match("/^.{6,}$/", $password)) {
+        echo "<div style='background:red;color:#fff;padding:10px;border-radius:5px;text-align:center;'>
+            Password must be at least 6 characters long.
+        </div>";
     } elseif ($password !== $confirm_password) {
         echo "<div style='background:red;color:#fff;padding:10px;border-radius:5px;text-align:center;'>
-                Password and confirm password do not match.
-              </div>";
+            Passwords do not match.
+        </div>";
     } else {
-        $stmt = $conn->prepare("INSERT INTO users 
+        $sql = "INSERT INTO users 
             (first_name, middle_name, last_name, birthday, street_name, house_number, building, postal_code, barangay, province, city, region, username, password, email, contact_number) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-        $stmt->bind_param("ssssssssssssssss", 
-            $first_name, $middle_name, $last_name, $birthday, 
-            $street_name, $house_number, $building, $postal_code, 
-            $barangay, $province, $city, $region, 
-            $username, $password, $email, $contact_number);
-
-        if ($stmt->execute()) {
+            VALUES 
+            ('$first_name', '$middle_name', '$last_name', '$birthday', '$street_name', '$house_number', '$building', '$postal_code', '$barangay', '$province', '$city', '$region', '$username', '$password', '$email', '$contact_number')";
+        
+        if ($conn->query($sql) === TRUE) {
             $mail = new PHPMailer(true);
             try {
                 $mail->isSMTP();
                 $mail->Host = 'smtp.gmail.com';
                 $mail->SMTPAuth = true;
                 $mail->Username = 'iacedos11@gmail.com';
-                $mail->Password = 'jmtipygfrkhamygu'; 
+                $mail->Password = 'jmtipygfrkhamygu';
                 $mail->SMTPSecure = 'tls';
                 $mail->Port = 587;
 
@@ -67,29 +66,30 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 $mail->addAddress($email, $first_name);
 
                 $mail->isHTML(true);
-                $mail->Subject = 'Welcome to My Website';
+                $mail->Subject = 'Welcome to our site';
                 $mail->Body = "
                     <h3>Hello $first_name!</h3>
-                    <p>Thank you for registering at our site. You can now log in anytime.</p>
+                    <p>Thank you for registering. Your account has been created.</p>
                 ";
 
                 $mail->send();
                 echo "<div style='background:#E6BD37;color:#000;padding:10px;border-radius:5px;text-align:center;'>
-                        Registration successful! A welcome email has been sent to $email.
-                      </div>";
+                    Registration successful! A welcome email has been sent to $email.
+                </div>";
             } catch (Exception $e) {
                 echo "<div style='background:red;color:#fff;padding:10px;border-radius:5px;text-align:center;'>
-                        Email could not be sent. Mailer Error: {$mail->ErrorInfo}
-                      </div>";
+                    Email could not be sent. Mailer Error: {$mail->ErrorInfo}
+                </div>";
             }
         } else {
             echo "<div style='background:red;color:#fff;padding:10px;border-radius:5px;text-align:center;'>
-                    Database error: " . $stmt->error . "
-                  </div>";
+                Database error: {$conn->error}
+            </div>";
         }
     }
 }
 ?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -126,10 +126,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             border: 1px solid #ccc;
             border-radius: 5px;
         }
-        .note {
-            font-size: 12px;
-            color: #888F92;
-        }
         input[type="submit"] {
             background-color: #E6BD37;
             color: #000000;
@@ -150,13 +146,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <h1>Registration Form</h1>
     <form method="post" action="">
         <label for="first_name">First Name</label>
-        <input type="text" name="first_name" id="first_name" pattern="[A-Za-z\s]+" title="Letters only" required>
+        <input type="text" name="first_name" id="first_name" pattern="[A-Za-z\s]+" required>
 
         <label for="middle_name">Middle Name (Optional)</label>
-        <input type="text" name="middle_name" id="middle_name" pattern="[A-Za-z\s]*" title="Letters only">
+        <input type="text" name="middle_name" id="middle_name" pattern="[A-Za-z\s]*">
 
         <label for="last_name">Last Name</label>
-        <input type="text" name="last_name" id="last_name" pattern="[A-Za-z\s]+" title="Letters only" required>
+        <input type="text" name="last_name" id="last_name" pattern="[A-Za-z\s]+" required>
 
         <label for="birthday">Birthday</label>
         <input type="date" name="birthday" id="birthday" required>
@@ -171,7 +167,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         <input type="text" name="building" id="building">
 
         <label for="postal_code">Postal Code</label>
-        <input type="text" name="postal_code" id="postal_code" pattern="[1-9][0-9]{3}" title="Must be 4 digits starting from 1-9" required>
+        <input type="text" name="postal_code" id="postal_code" pattern="[1-9][0-9]{3}" required>
 
         <label for="barangay">Barangay</label>
         <input type="text" name="barangay" id="barangay" required>
@@ -186,7 +182,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         <input type="text" name="region" id="region" required>
 
         <label for="username">Username</label>
-        <input type="text" name="username" id="username" pattern="^[A-Za-z0-9_]{3,20}$" title="3-20 characters, letters, numbers, underscores" required>
+        <input type="text" name="username" id="username" pattern="^[A-Za-z0-9_]{3,20}$" required>
 
         <label for="password">Password</label>
         <input type="password" name="password" id="password" required>
@@ -195,13 +191,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         <input type="password" name="confirm_password" id="confirm_password" required>
 
         <label for="email">Email</label>
-        <input type="text" name="email" id="email"
-               pattern="^[A-Za-z]+[A-Za-z0-9._]*@[A-Za-z0-9]+\.[A-Za-z]{2,}$"
-               title="Must be a valid email address" required>
+        <input type="text" name="email" id="email" pattern="^[A-Za-z]+[A-Za-z0-9._]*@[A-Za-z0-9]+\.[A-Za-z]{2,}$" required>
 
         <label for="contact_number">Contact Number</label>
-        <input type="text" name="contact_number" id="contact_number"
-               pattern="^09[0-9]{9}$" title="Must start with 09 and be 11 digits" required>
+        <input type="text" name="contact_number" id="contact_number" pattern="^09[0-9]{9}$" required>
 
         <input type="submit" value="Register">
     </form>
