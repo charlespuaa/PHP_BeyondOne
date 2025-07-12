@@ -90,7 +90,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <title>Etier Registration</title>
     <style>
         body {
-            background-color: #F1F1F1;
+            background-color: #FFFFFF;
             font-family: Arial, sans-serif;
             color: #000000;
             padding: 20px;
@@ -98,16 +98,21 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         h1 {
             text-align: center;
             color: #000000;
-            background: #FFFFFF;
-            padding: 15px;
-            border-radius: 10px;
+            margin-bottom: 30px;
+        }
+        .form-sections {
+            display: flex;
+            justify-content: space-between;
+            gap: 20px;
+            flex-wrap: wrap;
         }
         fieldset {
-            background-color: #FFFFFF;
+            flex: 1 1 30%;
             border: 2px solid #E6BD37;
             border-radius: 10px;
             padding: 20px;
-            margin-bottom: 20px;
+            box-sizing: border-box;
+            background-color: #F9F9F9;
         }
         legend {
             font-weight: bold;
@@ -120,10 +125,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         }
         input[type="text"],
         input[type="password"],
-        input[type="date"],
-        input[type="submit"] {
+        input[type="date"] {
             width: 100%;
-            padding: 10px;
+            padding: 8px;
             margin-top: 5px;
             border: 1px solid #ccc;
             border-radius: 5px;
@@ -135,26 +139,27 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             font-weight: bold;
             cursor: pointer;
             margin-top: 20px;
+            padding: 12px;
+            width: 100%;
             border: none;
+            border-radius: 5px;
         }
         input[type="submit"]:hover {
             background-color: #d9aa2f;
         }
+        .success, .error {
+            text-align: center;
+            padding: 10px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
         .success {
             background: #E6BD37;
             color: #000000;
-            padding: 10px;
-            border-radius: 5px;
-            text-align: center;
-            margin: 20px 0;
         }
         .error {
             background: red;
             color: #FFFFFF;
-            padding: 10px;
-            border-radius: 5px;
-            text-align: center;
-            margin: 20px 0;
         }
     </style>
 </head>
@@ -167,67 +172,69 @@ if (!empty($message) && isset($_COOKIE["hide_message"])) {
 }
 ?>
 <form method="post" action="">
-    <fieldset>
-        <legend>Personal Information</legend>
-        <label for="first_name">First Name</label>
-        <input type="text" name="first_name" id="first_name" pattern="[A-Za-z\s]+" required>
+    <div class="form-sections">
+        <fieldset>
+            <legend>1. Personal Info</legend>
+            <label for="first_name">First Name</label>
+            <input type="text" name="first_name" id="first_name" pattern="[A-Za-z\s]+" required>
 
-        <label for="middle_name">Middle Name (Optional)</label>
-        <input type="text" name="middle_name" id="middle_name" pattern="[A-Za-z\s]*">
+            <label for="middle_name">Middle Name (Optional)</label>
+            <input type="text" name="middle_name" id="middle_name" pattern="[A-Za-z\s]*">
 
-        <label for="last_name">Last Name</label>
-        <input type="text" name="last_name" id="last_name" pattern="[A-Za-z\s]+" required>
+            <label for="last_name">Last Name</label>
+            <input type="text" name="last_name" id="last_name" pattern="[A-Za-z\s]+" required>
 
-        <label for="birthday">Birthday</label>
-        <input type="date" name="birthday" id="birthday" required>
+            <label for="birthday">Birthday</label>
+            <input type="date" name="birthday" id="birthday" required>
 
-        <label for="email">Email</label>
-        <input type="text" name="email" id="email" pattern="^[A-Za-z]+[A-Za-z0-9._]*@[A-Za-z0-9]+\.[A-Za-z]{2,}$" required>
+            <label for="email">Email</label>
+            <input type="text" name="email" id="email" pattern="^[A-Za-z]+[A-Za-z0-9._]*@[A-Za-z0-9]+\.[A-Za-z]{2,}$" required>
 
-        <label for="contact_number">Contact Number</label>
-        <input type="text" name="contact_number" id="contact_number" pattern="^09[0-9]{9}$" required>
-    </fieldset>
+            <label for="contact_number">Contact Number</label>
+            <input type="text" name="contact_number" id="contact_number" pattern="^09[0-9]{9}$" required>
+        </fieldset>
 
-    <fieldset>
-        <legend>Address Information</legend>
-        <label for="street_name">Street Name</label>
-        <input type="text" name="street_name" id="street_name" required>
+        <fieldset>
+            <legend>2. Address Info</legend>
+            <label for="street_name">Street Name</label>
+            <input type="text" name="street_name" id="street_name" required>
 
-        <label for="house_number">House Number</label>
-        <input type="text" name="house_number" id="house_number" required>
+            <label for="house_number">House Number</label>
+            <input type="text" name="house_number" id="house_number" required>
 
-        <label for="building">Building (Optional)</label>
-        <input type="text" name="building" id="building">
+            <label for="building">Building (Optional)</label>
+            <input type="text" name="building" id="building">
 
-        <label for="postal_code">Postal Code</label>
-        <input type="text" name="postal_code" id="postal_code" pattern="[1-9][0-9]{3}" required>
+            <label for="postal_code">Postal Code</label>
+            <input type="text" name="postal_code" id="postal_code" pattern="[1-9][0-9]{3}" required>
 
-        <label for="barangay">Barangay</label>
-        <input type="text" name="barangay" id="barangay" required>
+            <label for="barangay">Barangay</label>
+            <input type="text" name="barangay" id="barangay" required>
 
-        <label for="province">Province</label>
-        <input type="text" name="province" id="province" required>
+            <label for="province">Province</label>
+            <input type="text" name="province" id="province" required>
 
-        <label for="city">City</label>
-        <input type="text" name="city" id="city" required>
+            <label for="city">City</label>
+            <input type="text" name="city" id="city" required>
 
-        <label for="region">Region</label>
-        <input type="text" name="region" id="region" required>
-    </fieldset>
+            <label for="region">Region</label>
+            <input type="text" name="region" id="region" required>
+        </fieldset>
 
-    <fieldset>
-        <legend>Account Information</legend>
-        <label for="username">Username</label>
-        <input type="text" name="username" id="username" pattern="^[A-Za-z0-9_]{3,20}$" required>
+        <fieldset>
+            <legend>3. Account Info</legend>
+            <label for="username">Username</label>
+            <input type="text" name="username" id="username" pattern="^[A-Za-z0-9_]{3,20}$" required>
 
-        <label for="password">Password</label>
-        <input type="password" name="password" id="password" required>
+            <label for="password">Password</label>
+            <input type="password" name="password" id="password" required>
 
-        <label for="confirm_password">Confirm Password</label>
-        <input type="password" name="confirm_password" id="confirm_password" required>
-    </fieldset>
+            <label for="confirm_password">Confirm Password</label>
+            <input type="password" name="confirm_password" id="confirm_password" required>
 
-    <input type="submit" value="Register">
+            <input type="submit" value="Register">
+        </fieldset>
+    </div>
 </form>
 
 </body>
