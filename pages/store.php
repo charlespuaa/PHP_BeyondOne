@@ -8,7 +8,11 @@ $result = $conn->query($sql);
 $categories = [
   'Hats and Caps' => [],
   'Eyewear' => [],
+  'Tops' => [],
+  'Bottoms' => [],
+  'Accessories' => [],
   'Hand Bags' => [],
+  'Shoes' => [],
   'Fragrance' => []
 ];
 
@@ -33,19 +37,19 @@ while ($row = $result->fetch_assoc()) {
     body {
       margin: 0;
       padding: 20px;
-      background: #F1F1F1;
+      background: #fff9f9ff;
     }
     .store-container {
       max-width: 1200px;
       margin: 0 auto;
       padding: 0 20px;
-      margin-top: 40px;
+      margin-top: 120px;
     }
     .category-section {
       margin-bottom: 40px;
     }
     .category-section:first-of-type {
-      margin-top: 120px;
+      margin-top: 200px;
     }
     h2.category-title {
       font-size: 24px;
@@ -137,6 +141,13 @@ while ($row = $result->fetch_assoc()) {
       bottom: 0;
       left: 0;
       z-index: 10;
+    }
+    #bottoms .product-card {
+        min-height: 550px; 
+        padding-bottom: 60px; 
+    }
+    #bottoms .image-container {
+        height: 500px; 
     }
     .product-card:hover .quickshop-container {
       opacity: 1;
