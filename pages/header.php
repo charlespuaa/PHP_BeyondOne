@@ -177,7 +177,7 @@
   <div class="top-nav">
     <div></div>
     <div class="logo">
-      <img src="../assets/etier-logo-png.png" alt="ETIER Logo">
+      <img src="../assets/etierlogoandtext-png.png" alt="ETIER Logo">
     </div>
     <div class="top-right">
       <a href="#"><i class="fas fa-shopping-bag"></i></a>
