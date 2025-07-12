@@ -78,7 +78,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         }
     }
 
-    // Always set the cookie if there's a message
     if (!empty($message)) {
         setcookie("hide_message", "1", time() + 5, "/");
     }
@@ -103,17 +102,21 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             padding: 15px;
             border-radius: 10px;
         }
-        .container {
-            max-width: 600px;
-            margin: 30px auto;
+        fieldset {
             background-color: #FFFFFF;
-            padding: 25px;
+            border: 2px solid #E6BD37;
             border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        legend {
+            font-weight: bold;
+            color: #E6BD37;
+            padding: 0 10px;
         }
         label {
             display: block;
             margin-top: 15px;
-            color: #000000;
         }
         input[type="text"],
         input[type="password"],
@@ -124,16 +127,15 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             margin-top: 5px;
             border: 1px solid #ccc;
             border-radius: 5px;
-            color: #000000;
             box-sizing: border-box;
         }
         input[type="submit"] {
             background-color: #E6BD37;
             color: #000000;
-            border: none;
             font-weight: bold;
             cursor: pointer;
             margin-top: 20px;
+            border: none;
         }
         input[type="submit"]:hover {
             background-color: #d9aa2f;
@@ -144,7 +146,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             padding: 10px;
             border-radius: 5px;
             text-align: center;
-            margin-bottom: 20px;
+            margin: 20px 0;
         }
         .error {
             background: red;
@@ -152,32 +154,21 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             padding: 10px;
             border-radius: 5px;
             text-align: center;
-            margin-bottom: 20px;
-        }
-        .note {
-            font-size: 12px;
-            color: #888F92;
-        }
-        a {
-            color: #E6BD37;
-            text-decoration: none;
-        }
-        a:hover {
-            text-decoration: underline;
+            margin: 20px 0;
         }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <h1>Etier Registration</h1>
-    <?php
-    // Only display if message exists and cookie still valid
-    if (!empty($message) && isset($_COOKIE["hide_message"])) {
-        echo $message;
-    }
-    ?>
-    <form method="post" action="">
+<h1>Etier Registration</h1>
+<?php
+if (!empty($message) && isset($_COOKIE["hide_message"])) {
+    echo $message;
+}
+?>
+<form method="post" action="">
+    <fieldset>
+        <legend>Personal Information</legend>
         <label for="first_name">First Name</label>
         <input type="text" name="first_name" id="first_name" pattern="[A-Za-z\s]+" required>
 
@@ -190,6 +181,15 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         <label for="birthday">Birthday</label>
         <input type="date" name="birthday" id="birthday" required>
 
+        <label for="email">Email</label>
+        <input type="text" name="email" id="email" pattern="^[A-Za-z]+[A-Za-z0-9._]*@[A-Za-z0-9]+\.[A-Za-z]{2,}$" required>
+
+        <label for="contact_number">Contact Number</label>
+        <input type="text" name="contact_number" id="contact_number" pattern="^09[0-9]{9}$" required>
+    </fieldset>
+
+    <fieldset>
+        <legend>Address Information</legend>
         <label for="street_name">Street Name</label>
         <input type="text" name="street_name" id="street_name" required>
 
@@ -213,7 +213,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
         <label for="region">Region</label>
         <input type="text" name="region" id="region" required>
+    </fieldset>
 
+    <fieldset>
+        <legend>Account Information</legend>
         <label for="username">Username</label>
         <input type="text" name="username" id="username" pattern="^[A-Za-z0-9_]{3,20}$" required>
 
@@ -222,16 +225,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
         <label for="confirm_password">Confirm Password</label>
         <input type="password" name="confirm_password" id="confirm_password" required>
+    </fieldset>
 
-        <label for="email">Email</label>
-        <input type="text" name="email" id="email" pattern="^[A-Za-z]+[A-Za-z0-9._]*@[A-Za-z0-9]+\.[A-Za-z]{2,}$" required>
-
-        <label for="contact_number">Contact Number</label>
-        <input type="text" name="contact_number" id="contact_number" pattern="^09[0-9]{9}$" required>
-
-        <input type="submit" value="Register">
-    </form>
-</div>
+    <input type="submit" value="Register">
+</form>
 
 </body>
 </html>
