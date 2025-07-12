@@ -39,9 +39,13 @@ while ($row = $result->fetch_assoc()) {
       max-width: 1200px;
       margin: 0 auto;
       padding: 0 20px;
+      margin-top: 40px;
     }
     .category-section {
       margin-bottom: 40px;
+    }
+    .category-section:first-of-type {
+      margin-top: 120px;
     }
     h2.category-title {
       font-size: 24px;
