@@ -123,7 +123,7 @@ while ($row = $result->fetch_assoc()) {
     }
     .quickshop-container {
       background: #ffffff;
-      padding: 10px 0;
+      padding: 20px 0;
       opacity: 0;
       visibility: hidden;
       transition: opacity 0.3s ease, visibility 0.3s ease;
