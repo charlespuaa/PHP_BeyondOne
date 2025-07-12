@@ -9,6 +9,7 @@ $categories = [
   'Hats and Caps' => [],
   'Eyewear' => [],
   'Tops' => [],
+  'Jackets' => [],
   'Bottoms' => [],
   'Accessories' => [],
   'Hand Bags' => [],
@@ -39,6 +40,51 @@ while ($row = $result->fetch_assoc()) {
       padding: 20px;
       background: #fff9f9ff;
     }
+    .hero-banners-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 20px;
+      max-width: 1200px;
+      margin: 220px auto 60px auto;
+      padding: 0 20px;
+    }
+    .hero-banner {
+      position: relative;
+      height: 400px;
+      overflow: hidden;
+      border-radius: 4px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+      cursor: pointer;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .hero-banner:hover {
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+    }
+    .hero-banner img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover; 
+      filter: brightness(0.7); 
+      transition: filter 0.3s ease;
+    }
+    .hero-banner:hover img {
+      filter: brightness(0.95);
+    }
+    .hero-banner-text {
+      position: absolute;
+      color: #fff;
+      font-size: 30px;
+      font-weight: bold;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+      text-align: center;
+      padding: 20px;
+    }
     .store-container {
       max-width: 1200px;
       margin: 0 auto;
@@ -65,7 +111,7 @@ while ($row = $result->fetch_assoc()) {
       gap: 30px;
     }
     .product-card {
-      background: #e9e9e9;
+      background: #f9f2f2f7;
       position: relative;
       text-align: center;
       overflow: hidden;
@@ -131,7 +177,6 @@ while ($row = $result->fetch_assoc()) {
       margin-bottom: 30px;
     }
     .quickshop-container {
-      background: #ffffff;
       padding: 20px 0;
       opacity: 0;
       visibility: hidden;
@@ -141,6 +186,13 @@ while ($row = $result->fetch_assoc()) {
       bottom: 0;
       left: 0;
       z-index: 10;
+    }
+    #jackets .product-card {
+        min-height: 550px; 
+        padding-bottom: 60px; 
+    }
+    #jackets .image-container {
+        height: 350px; 
     }
     #bottoms .product-card {
         min-height: 550px; 
@@ -159,13 +211,15 @@ while ($row = $result->fetch_assoc()) {
       color: #E6BD37;
       font-weight: bold;
       padding: 8px 30px;
-      border-radius: 4px;
+      border-radius: 30px;
       transition: 0.3s;
       cursor: pointer;
+      text-decoration: none;
     }
     .quickshop-button:hover {
       background-color: #E6BD37;
       color: #ffffff;
+      text-decoration: none;
     }
     html {
       scroll-behavior: smooth;
@@ -173,6 +227,23 @@ while ($row = $result->fetch_assoc()) {
   </style>
 </head>
 <body>
+
+ <div class="hero-banners-container">
+        <a href="#tops" class="hero-banner">
+            <img src="../assets/accessories_look.jpg" alt="Smart Casual">
+            <span class="hero-banner-text">SMART CASUAL</span>
+        </a>
+        <a href="#accessories" class="hero-banner">
+            <img src="../assets/casual_look.jpg" alt="Casual">
+            <span class="hero-banner-text">CASUAL</span>
+        </a>
+        <a href="#bottoms" class="hero-banner">
+            <img src="../assets/jacket_look.jpg" alt="StreetWear">
+            <span class="hero-banner-text">STREETWEAR</span>
+        </a>
+  </div>
+
+
   <?php foreach ($categories as $categoryName => $products): ?>
     <div class="category-section" id="<?= strtolower(str_replace([' ', '&'], '', $categoryName)) ?>">
       <h2 class="category-title"><?=$categoryName?></h2>

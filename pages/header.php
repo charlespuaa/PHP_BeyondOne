@@ -189,6 +189,7 @@
     <a href="#hatsandcaps">Hats and Caps</a>
     <a href="#eyewear">Eyewear</a>
     <a href="#tops">Top</a>
+    <a href="#jackets">Jackets</a>
     <a href="#bottoms">Bottom</a>
     <a href="#accessories">Accessories</a>
     <a href="#handbags">Hand Bags</a>
