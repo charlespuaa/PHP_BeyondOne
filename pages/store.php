@@ -1,5 +1,6 @@
 <?php
 include '../db.php';
+include 'header.php'; 
 
 $sql = "SELECT * FROM products ORDER BY category, id";
 $result = $conn->query($sql);

@@ -1,5 +1,6 @@
 <?php
 include '../db.php';
+include 'header.php';
 
 if (!isset($_GET['id'])) {
   die('Product ID missing.');
