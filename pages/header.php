@@ -49,11 +49,15 @@
     .top-bar-left {
       color: #000;
       font-weight: 500;
+      font-size: 16px;
+      font-weight:700;
     }
 
     .top-bar-right {
       display: flex;
       gap: 15px;
+      margin-right: 15px;
+      font-size: 15px;
     }
 
     .top-bar-right a {
@@ -83,7 +87,7 @@
     }
 
     .logo img {
-      width: 180px;              /* you can increase/decrease this */
+      width: 60px;              
       height: auto;
       max-width: 100%;
       object-fit: contain;
@@ -95,6 +99,7 @@
       justify-content: flex-end;
       align-items: center;
       gap: 20px;
+      margin-right: 15px;
     }
 
     .top-right a {
@@ -171,7 +176,7 @@
   <div class="top-nav">
     <div></div>
     <div class="logo">
-      <img src="../assets/EITER_logo_png.png" alt="ETIER Logo">
+      <img src="../assets/etier-logo-png.png" alt="ETIER Logo">
     </div>
     <div class="top-right">
       <a href="#"><i class="fas fa-search"></i></a>
