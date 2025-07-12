@@ -43,10 +43,10 @@ while ($row = $result->fetch_assoc()) {
       max-width: 1200px;
       margin: 0 auto;
       padding: 0 20px;
-      margin-top: 120px;
     }
     .category-section {
       margin-bottom: 40px;
+      scroll-margin-top: 140px;
     }
     .category-section:first-of-type {
       margin-top: 200px;
