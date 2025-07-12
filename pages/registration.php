@@ -28,74 +28,68 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $city = $_POST['city'];
     $region = $_POST['region'];
     $username = $_POST['username'];
-    $password = $_POST['password'];
-    $confirm_password = $_POST['confirm_password'];
+    $password = $_POST['password']; 
     $email = $_POST['email'];
     $contact_number = $_POST['contact_number'];
+    $confirm_password = $_POST['confirm_password'];
 
-    if (!preg_match('/^[A-Za-z0-9]{8,}$/', $password)) {
-        die("<div style='background:red;color:#fff;padding:10px;border-radius:5px;text-align:center;'>
-                Password must be at least 8 characters long and contain only letters and numbers.
-             </div>");
-    }
+    // Check password match using regex (alphanumeric at least 6 chars example)
+    if (!preg_match("/^[A-Za-z0-9]{6,}$/", $password)) {
+        echo "<div style='background:red;color:#fff;padding:10px;border-radius:5px;text-align:center;'>
+                Password must be at least 6 alphanumeric characters.
+              </div>";
+    } elseif ($password !== $confirm_password) {
+        echo "<div style='background:red;color:#fff;padding:10px;border-radius:5px;text-align:center;'>
+                Password and confirm password do not match.
+              </div>";
+    } else {
+        $stmt = $conn->prepare("INSERT INTO users 
+            (first_name, middle_name, last_name, birthday, street_name, house_number, building, postal_code, barangay, province, city, region, username, password, email, contact_number) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+        $stmt->bind_param("ssssssssssssssss", 
+            $first_name, $middle_name, $last_name, $birthday, 
+            $street_name, $house_number, $building, $postal_code, 
+            $barangay, $province, $city, $region, 
+            $username, $password, $email, $contact_number);
 
-    if ($password !== $confirm_password) {
-        die("<div style='background:red;color:#fff;padding:10px;border-radius:5px;text-align:center;'>
-                Passwords do not match.
-             </div>");
-    }
+        if ($stmt->execute()) {
+            $mail = new PHPMailer(true);
+            try {
+                $mail->isSMTP();
+                $mail->Host = 'smtp.gmail.com';
+                $mail->SMTPAuth = true;
+                $mail->Username = 'iacedos11@gmail.com';
+                $mail->Password = 'jmtipygfrkhamygu'; 
+                $mail->SMTPSecure = 'tls';
+                $mail->Port = 587;
 
-    $hashed_password = password_hash($password, PASSWORD_DEFAULT);
-    $token = bin2hex(random_bytes(16));
+                $mail->setFrom('iacedos11@gmail.com', 'My Website');
+                $mail->addAddress($email, $first_name);
 
-    $stmt = $conn->prepare("INSERT INTO users 
-        (first_name, middle_name, last_name, birthday, street_name, house_number, building, postal_code, barangay, province, city, region, username, password, email, contact_number, token) 
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-    $stmt->bind_param("sssssssssssssssss", 
-        $first_name, $middle_name, $last_name, $birthday, $street_name, 
-        $house_number, $building, $postal_code, $barangay, $province, 
-        $city, $region, $username, $hashed_password, $email, $contact_number, $token);
+                $mail->isHTML(true);
+                $mail->Subject = 'Welcome to My Website';
+                $mail->Body = "
+                    <h3>Hello $first_name!</h3>
+                    <p>Thank you for registering at our site. You can now log in anytime.</p>
+                ";
 
-    if ($stmt->execute()) {
-        $mail = new PHPMailer(true);
-        try {
-            $mail->isSMTP();
-            $mail->Host = 'smtp.gmail.com';
-            $mail->SMTPAuth = true;
-            $mail->Username = 'iacedos11@gmail.com';
-            $mail->Password = 'jmtipygfrkhamygu';
-            $mail->SMTPSecure = 'tls';
-            $mail->Port = 587;
-
-            $mail->setFrom('iacedos11@gmail.com', 'My Website');
-            $mail->addAddress($email, $first_name);
-
-            $mail->isHTML(true);
-            $mail->Subject = 'Confirm your registration';
-            $mail->Body = "
-                <h3>Hello $first_name!</h3>
-                <p>Thank you for registering. Please confirm your email by clicking the link below:</p>
-                <p><a href='http://localhost/verify.php?email=$email&token=$token'>Confirm Email</a></p>
-                <p>If you did not sign up, please ignore this email.</p>
-            ";
-
-            $mail->send();
-            echo "<div style='background:#E6BD37;color:#000;padding:10px;border-radius:5px;text-align:center;'>
-                    Registration successful! A confirmation email has been sent to $email.
-                  </div>";
-        } catch (Exception $e) {
+                $mail->send();
+                echo "<div style='background:#E6BD37;color:#000;padding:10px;border-radius:5px;text-align:center;'>
+                        Registration successful! A welcome email has been sent to $email.
+                      </div>";
+            } catch (Exception $e) {
+                echo "<div style='background:red;color:#fff;padding:10px;border-radius:5px;text-align:center;'>
+                        Email could not be sent. Mailer Error: {$mail->ErrorInfo}
+                      </div>";
+            }
+        } else {
             echo "<div style='background:red;color:#fff;padding:10px;border-radius:5px;text-align:center;'>
-                    Email could not be sent. Mailer Error: {$mail->ErrorInfo}
+                    Database error: " . $stmt->error . "
                   </div>";
         }
-    } else {
-        echo "<div style='background:red;color:#fff;padding:10px;border-radius:5px;text-align:center;'>
-                Database error: " . $stmt->error . "
-              </div>";
     }
 }
 ?>
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
