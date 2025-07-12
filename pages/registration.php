@@ -143,7 +143,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 <body>
 
 <div class="container">
-    <h1>Registration Form</h1>
+    <h1>Etier Registration Page</h1>
     <form method="post" action="">
         <label for="first_name">First Name</label>
         <input type="text" name="first_name" id="first_name" pattern="[A-Za-z\s]+" required>
