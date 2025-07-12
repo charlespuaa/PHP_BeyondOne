@@ -7,7 +7,7 @@ require 'vendor/autoload.php';
 $host = 'localhost';
 $db   = 'etierreg';
 $user = 'root';
-$pass = ''; 
+$pass = '';
 
 $conn = new mysqli($host, $user, $pass, $db);
 if ($conn->connect_error) {
@@ -28,27 +28,42 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $city = $_POST['city'];
     $region = $_POST['region'];
     $username = $_POST['username'];
-    $password = password_hash($_POST['password'], PASSWORD_DEFAULT); 
+    $password = $_POST['password'];
+    $confirm_password = $_POST['confirm_password'];
     $email = $_POST['email'];
     $contact_number = $_POST['contact_number'];
 
+    if (!preg_match('/^[A-Za-z0-9]{8,}$/', $password)) {
+        die("<div style='background:red;color:#fff;padding:10px;border-radius:5px;text-align:center;'>
+                Password must be at least 8 characters long and contain only letters and numbers.
+             </div>");
+    }
+
+    if ($password !== $confirm_password) {
+        die("<div style='background:red;color:#fff;padding:10px;border-radius:5px;text-align:center;'>
+                Passwords do not match.
+             </div>");
+    }
+
+    $hashed_password = password_hash($password, PASSWORD_DEFAULT);
     $token = bin2hex(random_bytes(16));
 
-    // Insert into DB
     $stmt = $conn->prepare("INSERT INTO users 
         (first_name, middle_name, last_name, birthday, street_name, house_number, building, postal_code, barangay, province, city, region, username, password, email, contact_number, token) 
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-    $stmt->bind_param("sssssssssssssssss", $first_name, $middle_name, $last_name, $birthday, $street_name, $house_number, $building, $postal_code, $barangay, $province, $city, $region, $username, $password, $email, $contact_number, $token);
+    $stmt->bind_param("sssssssssssssssss", 
+        $first_name, $middle_name, $last_name, $birthday, $street_name, 
+        $house_number, $building, $postal_code, $barangay, $province, 
+        $city, $region, $username, $hashed_password, $email, $contact_number, $token);
 
     if ($stmt->execute()) {
-        // Send confirmation email
         $mail = new PHPMailer(true);
         try {
             $mail->isSMTP();
             $mail->Host = 'smtp.gmail.com';
             $mail->SMTPAuth = true;
             $mail->Username = 'iacedos11@gmail.com';
-            $mail->Password = 'jmtipygfrkhamygu'; // your App Password
+            $mail->Password = 'jmtipygfrkhamygu';
             $mail->SMTPSecure = 'tls';
             $mail->Port = 587;
 
@@ -139,64 +154,63 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
 <div class="container">
     <h1>Registration Form</h1>
-    <form method="post" action="" onsubmit="return validatePassword();">
-    <label for="first_name">First Name</label>
-    <input type="text" name="first_name" id="first_name" pattern="[A-Za-z\s]+" title="Letters only" required>
+    <form method="post" action="">
+        <label for="first_name">First Name</label>
+        <input type="text" name="first_name" id="first_name" pattern="[A-Za-z\s]+" title="Letters only" required>
 
-    <label for="middle_name">Middle Name (Optional)</label>
-    <input type="text" name="middle_name" id="middle_name" pattern="[A-Za-z\s]*" title="Letters only">
+        <label for="middle_name">Middle Name (Optional)</label>
+        <input type="text" name="middle_name" id="middle_name" pattern="[A-Za-z\s]*" title="Letters only">
 
-    <label for="last_name">Last Name</label>
-    <input type="text" name="last_name" id="last_name" pattern="[A-Za-z\s]+" title="Letters only" required>
+        <label for="last_name">Last Name</label>
+        <input type="text" name="last_name" id="last_name" pattern="[A-Za-z\s]+" title="Letters only" required>
 
-    <label for="birthday">Birthday</label>
-    <input type="date" name="birthday" id="birthday" required>
+        <label for="birthday">Birthday</label>
+        <input type="date" name="birthday" id="birthday" required>
 
-    <label for="street_name">Street Name</label>
-    <input type="text" name="street_name" id="street_name" required>
+        <label for="street_name">Street Name</label>
+        <input type="text" name="street_name" id="street_name" required>
 
-    <label for="house_number">House Number</label>
-    <input type="text" name="house_number" id="house_number" required>
+        <label for="house_number">House Number</label>
+        <input type="text" name="house_number" id="house_number" required>
 
-    <label for="building">Building (Optional)</label>
-    <input type="text" name="building" id="building">
+        <label for="building">Building (Optional)</label>
+        <input type="text" name="building" id="building">
 
-    <label for="postal_code">Postal Code</label>
-    <input type="text" name="postal_code" id="postal_code" pattern="[1-9][0-9]{3}" title="Must be 4 digits starting from 1-9" required>
+        <label for="postal_code">Postal Code</label>
+        <input type="text" name="postal_code" id="postal_code" pattern="[1-9][0-9]{3}" title="Must be 4 digits starting from 1-9" required>
 
-    <label for="barangay">Barangay</label>
-    <input type="text" name="barangay" id="barangay" required>
+        <label for="barangay">Barangay</label>
+        <input type="text" name="barangay" id="barangay" required>
 
-    <label for="province">Province</label>
-    <input type="text" name="province" id="province" required>
+        <label for="province">Province</label>
+        <input type="text" name="province" id="province" required>
 
-    <label for="city">City</label>
-    <input type="text" name="city" id="city" required>
+        <label for="city">City</label>
+        <input type="text" name="city" id="city" required>
 
-    <label for="region">Region</label>
-    <input type="text" name="region" id="region" required>
+        <label for="region">Region</label>
+        <input type="text" name="region" id="region" required>
 
-    <label for="username">Username</label>
-    <input type="text" name="username" id="username" pattern="^[A-Za-z0-9_]{3,20}$" title="3-20 characters, letters, numbers, underscores" required>
+        <label for="username">Username</label>
+        <input type="text" name="username" id="username" pattern="^[A-Za-z0-9_]{3,20}$" title="3-20 characters, letters, numbers, underscores" required>
 
-    <label for="password">Password</label>
-    <input type="password" name="password" id="password" required>
+        <label for="password">Password</label>
+        <input type="password" name="password" id="password" required>
 
-    <label for="confirm_password">Confirm Password</label>
-    <input type="password" name="confirm_password" id="confirm_password" required>
+        <label for="confirm_password">Confirm Password</label>
+        <input type="password" name="confirm_password" id="confirm_password" required>
 
-    <label for="email">Email</label>
-    <input type="text" name="email" id="email"
-           pattern="^[A-Za-z]+[A-Za-z0-9._]*@[A-Za-z0-9]+\.[A-Za-z]{2,}$"
-           title="Must be a valid email address" required>
+        <label for="email">Email</label>
+        <input type="text" name="email" id="email"
+               pattern="^[A-Za-z]+[A-Za-z0-9._]*@[A-Za-z0-9]+\.[A-Za-z]{2,}$"
+               title="Must be a valid email address" required>
 
-    <label for="contact_number">Contact Number</label>
-    <input type="text" name="contact_number" id="contact_number"
-           pattern="^09[0-9]{9}$" title="Must start with 09 and be 11 digits" required>
+        <label for="contact_number">Contact Number</label>
+        <input type="text" name="contact_number" id="contact_number"
+               pattern="^09[0-9]{9}$" title="Must start with 09 and be 11 digits" required>
 
-    <input type="submit" value="Register">
-</form>
-
+        <input type="submit" value="Register">
+    </form>
 </div>
 
 </body>
