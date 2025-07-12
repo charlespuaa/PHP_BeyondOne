@@ -37,10 +37,11 @@
 
     /* --- TOP BAR --- */
     .top-bar {
+
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 8px 20px;
+      padding: 15px 20px;
       font-size: 13px;
       background-color: #fff;
       border-bottom: 1px solid #eee;
@@ -99,7 +100,7 @@
       justify-content: flex-end;
       align-items: center;
       gap: 20px;
-      margin-right: 15px;
+      margin-right: 20px;
     }
 
     .top-right a {
@@ -167,8 +168,8 @@
   <div class="top-bar">
     <div class="top-bar-left">ETIER</div>
     <div class="top-bar-right">
-      <a href="#">About Us</a>
-      <a href="#">Sign In</a>
+      <a href="#">ABOUT US</a>
+      <a href="#">SIGN IN</a>
     </div>
   </div>
 
@@ -179,8 +180,6 @@
       <img src="../assets/etier-logo-png.png" alt="ETIER Logo">
     </div>
     <div class="top-right">
-      <a href="#"><i class="fas fa-search"></i></a>
-      <a href="#"><i class="far fa-heart"></i></a>
       <a href="#"><i class="fas fa-shopping-bag"></i></a>
     </div>
   </div>
@@ -189,8 +188,8 @@
   <nav class="main-nav">
     <a href="#hatsandcaps">Hats and Caps</a>
     <a href="#eyewear">Eyewear</a>
-    <a href="#top">Top</a>
-    <a href="#bottom">Bottom</a>
+    <a href="#tops">Top</a>
+    <a href="#bottoms">Bottom</a>
     <a href="#accessories">Accessories</a>
     <a href="#handbags">Hand Bags</a>
     <a href="#shoes">Shoes</a>
