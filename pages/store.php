@@ -37,19 +37,19 @@ while ($row = $result->fetch_assoc()) {
     body {
       margin: 0;
       padding: 20px;
-      background: #F1F1F1;
+      background: #fff9f9ff;
     }
     .store-container {
       max-width: 1200px;
       margin: 0 auto;
       padding: 0 20px;
-      margin-top: 40px;
+      margin-top: 120px;
     }
     .category-section {
       margin-bottom: 40px;
     }
     .category-section:first-of-type {
-      margin-top: 120px;
+      margin-top: 200px;
     }
     h2.category-title {
       font-size: 24px;
