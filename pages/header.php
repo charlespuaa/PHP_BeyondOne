@@ -22,7 +22,7 @@
     }
 
     body {
-      padding-top: 120px; /* Adjust this if header height changes further */
+      padding-top: 120px; 
     }
 
     header {
