@@ -172,7 +172,7 @@ while ($row = $result->fetch_assoc()) {
             <div class="product-brand">Etier</div>
             <div class="product-price">₱<?= number_format($product['price'], 2) ?></div>
             <div class="quickshop-container">
-              <button class="quickshop-button">QuickShop</button>
+             <a href="product.php?id=<?=$product['id']?>" class="quickshop-button">QuickShop</a>
             </div>
           </div>
         <?php endforeach; ?>
