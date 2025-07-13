@@ -30,7 +30,13 @@ $city = $_POST['city'] ?? '';
 $region = $_POST['region'] ?? '';
 
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['register'])) {
-    if (!preg_match("/^[A-Za-z0-9_]{3,20}$/", $username)) {
+    if (empty($first_name) || empty($last_name) || empty($birthday) || empty($email) || empty($contact_number)) {
+        $message = "<div class='error-text'>Please complete your personal information before registering.</div>";
+    }
+    elseif (empty($street_name) || empty($house_number) || empty($barangay) || empty($province) || empty($city) || empty($region) || empty($postal_code)) {
+        $message = "<div class='error-text'>Please complete your address information before registering.</div>";
+    }
+    elseif (!preg_match("/^[A-Za-z0-9_]{3,20}$/", $username)) {
         $message = "<div class='error-text'>Invalid username format.</div>";
     } elseif (!preg_match("/^.{6,}$/", $password)) {
         $message = "<div class='error-text'>Password must be at least 6 characters.</div>";
@@ -50,8 +56,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['register'])) {
             );
             if ($stmt->execute()) {
                 $to = $email;
-                $subject = "Welcome to Etier Registration";
-                $body = "<html><body><h3>Hello $first_name!</h3><p>Thank you for registering.</p></body></html>";
+                $subject = "Welcome to Etier!";
+                $body = "<html><body><h3>Hello $first_name!</h3><p>This is to inform you that you created an account in Etier. Please confirm by signing into our website using the credentials you have entered. If this was not you please contact us at etier@gmail.com.</p></body></html>";
                 $headers = "MIME-Version: 1.0\r\n";
                 $headers .= "Content-type:text/html;charset=UTF-8\r\n";
                 $headers .= "From: Etier <no-reply@yourdomain.com>\r\n";
