@@ -53,10 +53,10 @@
 </head>
 <body>
 
-<h1 style="text-align:center;">Personal Info</h1>
+<h1 style="text-align:center;">Registration</h1>
 <form method="post" action="address_info_reg.php">
     <fieldset>
-        <legend>Personal Info</legend>
+        <legend>Personal Information</legend>
         <label>First Name</label>
         <input type="text" name="first_name" pattern="[A-Za-z\s]+" required>
 

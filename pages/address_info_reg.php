@@ -62,10 +62,10 @@ $contact_number = $_POST['contact_number'] ?? '';
 </head>
 <body>
 
-<h1 style="text-align:center;">Address Info</h1>
+<h1 style="text-align:center;">Registration Form</h1>
 <form method="post" action="account_info_reg.php">
     <fieldset>
-        <legend>Address Info</legend>
+        <legend>Address Information</legend>
         <label>Street Name</label>
         <input type="text" name="street_name" required>
 
@@ -90,7 +90,6 @@ $contact_number = $_POST['contact_number'] ?? '';
         <label>Region</label>
         <input type="text" name="region" required>
 
-        <!-- Hidden inputs to pass personal info -->
         <input type="hidden" name="first_name" value="<?= htmlspecialchars($first_name) ?>">
         <input type="hidden" name="middle_name" value="<?= htmlspecialchars($middle_name) ?>">
         <input type="hidden" name="last_name" value="<?= htmlspecialchars($last_name) ?>">

@@ -123,10 +123,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['register'])) {
 </head>
 <body>
 
-<h1 style="text-align:center;">Account Info</h1>
+<h1 style="text-align:center;">Registration</h1>
 <form method="post">
     <fieldset>
-        <legend>Account Info</legend>
+        <legend>Account Information</legend>
         <label>Username</label>
         <input type="text" name="username" value="<?= htmlspecialchars($username) ?>" pattern="^[A-Za-z0-9_]{3,20}$" required>
 
