@@ -1,6 +1,5 @@
-<?php include 'registration_header.php'; ?>
 <?php
-// Receive data from personal info page
+include 'header.php';
 $first_name = $_POST['first_name'] ?? '';
 $middle_name = $_POST['middle_name'] ?? '';
 $last_name = $_POST['last_name'] ?? '';

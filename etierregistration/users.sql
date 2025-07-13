@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Jul 12, 2025 at 11:41 AM
+-- Generation Time: Jul 13, 2025 at 12:56 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -53,7 +53,8 @@ CREATE TABLE `users` (
 --
 
 INSERT INTO `users` (`id`, `first_name`, `middle_name`, `last_name`, `birthday`, `street_name`, `house_number`, `building`, `barangay`, `city`, `region`, `province`, `postal_code`, `password`, `username`, `email`, `contact_number`, `created_at`) VALUES
-(2, 'Etier', '', 'User', '2025-07-12', 'Sunny Street', '143 Sola', 'Stormy Building', 'Barangay Alexa', 'Choco City', 'NCR', 'Spyro Province ', 1234, 'collocuetopuawei', 'BeyondOne', 'iacedos11@gmail.com', '09123456789', '2025-07-12 09:23:30');
+(2, 'Etier', '', 'User', '2025-07-12', 'Sunny Street', '143 Sola', 'Stormy Building', 'Barangay Alexa', 'Choco City', 'NCR', 'Spyro Province ', 1234, 'collocuetopuawei', 'BeyondOne', 'iacedos11@gmail.com', '09123456789', '2025-07-12 09:23:30'),
+(14, 'Paul Benedict', 'Viray', 'Collo', '2025-07-16', 'Sunny Street', '143 Sola', 'Stormy Building', 'Barangay Alexa', 'Choco City', 'NCR', 'Spyro Province ', 1234, '$2y$10$iDlIaKUvA/6JO2iBbfNn5u7FE6iI1ax2xpNkBMZGXpmkbSvj5TvVa', 'BeneTest', 'paulbenedictcollo@gmail.com', '09123456789', '2025-07-13 10:06:18');
 
 --
 -- Indexes for dumped tables
@@ -73,7 +74,7 @@ ALTER TABLE `users`
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
-  MODIFY `id` int(50) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` int(50) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

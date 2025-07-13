@@ -1,5 +1,5 @@
 <?php
-include 'registration_header.php';
+include 'header.php';
 
 $host = 'localhost';
 $db   = 'etierreg';
