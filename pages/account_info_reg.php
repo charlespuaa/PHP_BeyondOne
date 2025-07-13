@@ -61,7 +61,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['register'])) {
                 } else {
                     $message = "<div class='error-text'>Registered, but email failed to send.</div>";
                 }
-                // Clear username after successful registration
                 $username = "";
             } else {
                 $message = "<div class='error-text'>DB error: {$stmt->error}</div>";
