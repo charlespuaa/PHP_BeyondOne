@@ -84,14 +84,13 @@ if (isset($_COOKIE['form_message'])) {
     setcookie("form_message", "", time() - 3600, "/");
 }
 
-// ✅ NOW include your header AFTER all header & cookie logic
 include 'header.php';
 ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Account Info Registration</title>
+    <title>Registration</title>
     <style>
         body {
             font-family: Arial, sans-serif;

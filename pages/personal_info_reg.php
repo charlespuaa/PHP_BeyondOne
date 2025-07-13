@@ -3,7 +3,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Personal Info Registration</title>
+    <title>Registration</title>
     <style>
         body {
             font-family: Arial, sans-serif;
