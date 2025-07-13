@@ -1,5 +1,5 @@
 <?php
-include 'header.php';
+session_start();
 
 $host = 'localhost';
 $db   = 'etierreg';
@@ -9,13 +9,11 @@ $pass = '';
 $conn = new mysqli($host, $user, $pass, $db);
 if ($conn->connect_error) die("Connection failed: " . $conn->connect_error);
 
-session_start();
-
 $error_message = "";
 
 if (isset($_COOKIE['login_error'])) {
     $error_message = $_COOKIE['login_error'];
-    setcookie('login_error', '', time() - 3600, "/");
+    setcookie('login_error', '', time() - 3600, "/"); 
 }
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
@@ -27,7 +25,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $stmt->bind_param("s", $username);
         $stmt->execute();
         $stmt->store_result();
-        
+
         if ($stmt->num_rows == 1) {
             $stmt->bind_result($hashed_password);
             $stmt->fetch();
@@ -36,19 +34,24 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 header("Location: store.php");
                 exit;
             } else {
-                $error_message = "Invalid password.";
-                setcookie("login_error", $error_message, time() + 5, "/");
+                setcookie("login_error", "Invalid password.", 0, "/");
+                header("Location: " . $_SERVER['PHP_SELF']);
+                exit;
             }
         } else {
-            $error_message = "Username not found.";
-            setcookie("login_error", $error_message, time() + 5, "/");
+            setcookie("login_error", "Username not found.", 0, "/");
+            header("Location: " . $_SERVER['PHP_SELF']);
+            exit;
         }
         $stmt->close();
     } else {
-        $error_message = "Database error: {$conn->error}";
-        setcookie("login_error", $error_message, time() + 5, "/");
+        setcookie("login_error", "Database error: {$conn->error}", 0, "/");
+        header("Location: " . $_SERVER['PHP_SELF']);
+        exit;
     }
 }
+
+include 'header.php';
 ?>
 
 <!DOCTYPE html>
