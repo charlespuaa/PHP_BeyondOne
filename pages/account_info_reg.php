@@ -1,0 +1,137 @@
+<?php
+include 'registration_header.php';
+$host = 'localhost';
+$db   = 'etierreg';
+$user = 'root';
+$pass = '';
+
+$conn = new mysqli($host, $user, $pass, $db);
+if ($conn->connect_error) die("Connection failed: " . $conn->connect_error);
+
+$message = "";
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    $username = trim($_POST['username']);
+    $password = $_POST['password'];
+    $confirm_password = $_POST['confirm_password'];
+
+    $first_name = $_POST['first_name'] ?? '';
+    $middle_name = $_POST['middle_name'] ?? '';
+    $last_name = $_POST['last_name'] ?? '';
+    $birthday = $_POST['birthday'] ?? '';
+    $email = $_POST['email'] ?? '';
+    $contact_number = $_POST['contact_number'] ?? '';
+    $street_name = $_POST['street_name'] ?? '';
+    $house_number = $_POST['house_number'] ?? '';
+    $building = $_POST['building'] ?? '';
+    $postal_code = $_POST['postal_code'] ?? '';
+    $barangay = $_POST['barangay'] ?? '';
+    $province = $_POST['province'] ?? '';
+    $city = $_POST['city'] ?? '';
+    $region = $_POST['region'] ?? '';
+
+    if (!preg_match("/^[A-Za-z0-9_]{3,20}$/", $username)) {
+        $message = "<div class='error'>Invalid username format.</div>";
+    } elseif (!preg_match("/^.{6,}$/", $password)) {
+        $message = "<div class='error'>Password must be at least 6 characters.</div>";
+    } elseif ($password !== $confirm_password) {
+        $message = "<div class='error'>Passwords do not match.</div>";
+    } else {
+        $hashed_password = password_hash($password, PASSWORD_DEFAULT);
+        $stmt = $conn->prepare("INSERT INTO users 
+            (first_name, middle_name, last_name, birthday, street_name, house_number, building, postal_code, barangay, province, city, region, username, password, email, contact_number)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+        if ($stmt) {
+            $stmt->bind_param("ssssssssssssssss",
+                $first_name, $middle_name, $last_name, $birthday,
+                $street_name, $house_number, $building, $postal_code,
+                $barangay, $province, $city, $region,
+                $username, $hashed_password, $email, $contact_number
+            );
+            if ($stmt->execute()) {
+                $to = $email;
+                $subject = "Welcome to Etier Registration";
+                $body = "<html><body><h3>Hello $first_name!</h3><p>Thank you for registering.</p></body></html>";
+                $headers = "MIME-Version: 1.0\r\n";
+                $headers .= "Content-type:text/html;charset=UTF-8\r\n";
+                $headers .= "From: Etier <no-reply@yourdomain.com>\r\n";
+
+                if (mail($to, $subject, $body, $headers)) {
+                    $message = "<div class='success'>Registered! Email sent to $email.</div>";
+                } else {
+                    $message = "<div class='error'>Registered, but email failed to send.</div>";
+                }
+            } else $message = "<div class='error'>DB error: {$stmt->error}</div>";
+            $stmt->close();
+        } else $message = "<div class='error'>Prepare error: {$conn->error}</div>";
+    }
+}
+?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Account Info Registration</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            color: #000;
+            background: #fff;
+            padding: 20px;
+            padding-top: 150px;
+        }
+        fieldset {
+            border: 2px solid #E6BD37;
+            border-radius: 10px;
+            padding: 20px;
+            background: #F9F9F9;
+            max-width: 500px;
+            margin: auto;
+        }
+        legend { font-weight: bold; color: #E6BD37; }
+        label { display: block; margin-top: 15px; }
+        input[type="text"], input[type="password"] {
+            width: 100%; padding: 8px; margin-top: 5px;
+            border: 1px solid #ccc; border-radius: 5px;
+        }
+        input[type="submit"] {
+            background: #E6BD37; color: #000; font-weight: bold;
+            margin-top: 20px; padding: 12px; width: 100%;
+            border: none; border-radius: 5px; cursor: pointer;
+        }
+        input[type="submit"]:hover { background: #d9aa2f; }
+        .success, .error {
+            text-align: center; padding: 10px; margin: 20px auto;
+            max-width: 500px; border-radius: 5px;
+        }
+        .success { background: #E6BD37; color: #000; }
+        .error { background: red; color: #fff; }
+    </style>
+</head>
+<body>
+
+<h1 style="text-align:center;">Account Info</h1>
+<?php if (!empty($message)) echo $message; ?>
+<form method="post">
+    <fieldset>
+        <legend>Account Info</legend>
+        <label>Username</label>
+        <input type="text" name="username" pattern="^[A-Za-z0-9_]{3,20}$" required>
+
+        <label>Password</label>
+        <input type="password" name="password" required>
+
+        <label>Confirm Password</label>
+        <input type="password" name="confirm_password" required>
+
+        <?php foreach ($_POST as $key => $value): ?>
+            <?php if (!in_array($key, ['username','password','confirm_password'])): ?>
+                <input type="hidden" name="<?= htmlspecialchars($key) ?>" value="<?= htmlspecialchars($value) ?>">
+            <?php endif; ?>
+        <?php endforeach; ?>
+
+        <input type="submit" value="Register">
+    </fieldset>
+</form>
+
+</body>
+</html>
