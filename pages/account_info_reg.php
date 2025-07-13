@@ -98,7 +98,7 @@ include 'header.php';
             color: #000;
             background: #fff;
             padding: 20px;
-            padding-top: 150px;
+            padding-top: 200px;
         }
         fieldset {
             border: 2px solid #E6BD37;

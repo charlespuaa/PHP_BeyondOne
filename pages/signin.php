@@ -65,7 +65,7 @@ include 'header.php';
             color: #000;
             background: #fff;
             padding: 20px;
-            padding-top: 160px;
+            padding-top: 220px;
         }
         h1 {
             text-align: center;

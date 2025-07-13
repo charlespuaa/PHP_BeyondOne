@@ -18,7 +18,7 @@ $contact_number = $_POST['contact_number'] ?? '';
             color: #000;
             background: #fff;
             padding: 20px;
-            padding-top: 150px;
+            padding-top: 200px;
         }
         fieldset {
             border: 2px solid #E6BD37;
@@ -61,7 +61,7 @@ $contact_number = $_POST['contact_number'] ?? '';
 </head>
 <body>
 
-<h1 style="text-align:center;">Registration Form</h1>
+<h1 style="text-align:center;">Registration</h1>
 <form method="post" action="account_info_reg.php">
     <fieldset>
         <legend>Address Information</legend>
