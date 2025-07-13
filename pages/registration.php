@@ -1,9 +1,4 @@
 <?php
-use PHPMailer\PHPMailer\PHPMailer;
-use PHPMailer\PHPMailer\Exception;
-
-require 'vendor/autoload.php';
-
 $host = 'localhost';
 $db   = 'etierreg';
 $user = 'root';
@@ -17,23 +12,23 @@ if ($conn->connect_error) {
 $message = "";
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $first_name = $_POST['first_name'];
-    $middle_name = $_POST['middle_name'];
-    $last_name = $_POST['last_name'];
-    $birthday = $_POST['birthday'];
-    $street_name = $_POST['street_name'];
-    $house_number = $_POST['house_number'];
-    $building = $_POST['building'];
-    $postal_code = $_POST['postal_code'];
-    $barangay = $_POST['barangay'];
-    $province = $_POST['province'];
-    $city = $_POST['city'];
-    $region = $_POST['region'];
-    $username = $_POST['username'];
+    $first_name = htmlspecialchars(trim($_POST['first_name']));
+    $middle_name = htmlspecialchars(trim($_POST['middle_name']));
+    $last_name = htmlspecialchars(trim($_POST['last_name']));
+    $birthday = htmlspecialchars(trim($_POST['birthday']));
+    $street_name = htmlspecialchars(trim($_POST['street_name']));
+    $house_number = htmlspecialchars(trim($_POST['house_number']));
+    $building = htmlspecialchars(trim($_POST['building']));
+    $postal_code = htmlspecialchars(trim($_POST['postal_code']));
+    $barangay = htmlspecialchars(trim($_POST['barangay']));
+    $province = htmlspecialchars(trim($_POST['province']));
+    $city = htmlspecialchars(trim($_POST['city']));
+    $region = htmlspecialchars(trim($_POST['region']));
+    $username = htmlspecialchars(trim($_POST['username']));
     $password = $_POST['password'];
     $confirm_password = $_POST['confirm_password'];
-    $email = $_POST['email'];
-    $contact_number = $_POST['contact_number'];
+    $email = htmlspecialchars(trim($_POST['email']));
+    $contact_number = htmlspecialchars(trim($_POST['contact_number']));
 
     if (!preg_match("/^[A-Za-z0-9_]{3,20}$/", $username)) {
         $message = "<div class='error'>Invalid username format.</div>";
@@ -42,39 +37,63 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     } elseif ($password !== $confirm_password) {
         $message = "<div class='error'>Passwords do not match.</div>";
     } else {
-        $sql = "INSERT INTO users 
-            (first_name, middle_name, last_name, birthday, street_name, house_number, building, postal_code, barangay, province, city, region, username, password, email, contact_number) 
-            VALUES 
-            ('$first_name', '$middle_name', '$last_name', '$birthday', '$street_name', '$house_number', '$building', '$postal_code', '$barangay', '$province', '$city', '$region', '$username', '$password', '$email', '$contact_number')";
+
+        $hashed_password = password_hash($password, PASSWORD_DEFAULT);
+
+        $stmt = $conn->prepare("INSERT INTO users 
+            (first_name, middle_name, last_name, birthday, street_name, house_number, building, postal_code, barangay, province, city, region, username, password, email, contact_number)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
         
-        if ($conn->query($sql) === TRUE) {
-            $mail = new PHPMailer(true);
-            try {
-                $mail->isSMTP();
-                $mail->Host = 'smtp.gmail.com';
-                $mail->SMTPAuth = true;
-                $mail->Username = 'iacedos11@gmail.com';
-                $mail->Password = 'jmtipygfrkhamygu';
-                $mail->SMTPSecure = 'tls';
-                $mail->Port = 587;
+        if ($stmt) {
+            $stmt->bind_param(
+                "ssssssssssssssss",
+                $first_name,
+                $middle_name,
+                $last_name,
+                $birthday,
+                $street_name,
+                $house_number,
+                $building,
+                $postal_code,
+                $barangay,
+                $province,
+                $city,
+                $region,
+                $username,
+                $hashed_password,
+                $email,
+                $contact_number
+            );
 
-                $mail->setFrom('iacedos11@gmail.com', 'My Website');
-                $mail->addAddress($email, $first_name);
-
-                $mail->isHTML(true);
-                $mail->Subject = 'Welcome to Etier Registration';
-                $mail->Body = "
+            if ($stmt->execute()) {
+                $to = $email;
+                $subject = "Welcome to Etier Registration";
+                $messageBody = "
+                <html>
+                <head><title>Welcome to Etier</title></head>
+                <body>
                     <h3 style='color: #000;'>Hello $first_name!</h3>
-                    <p style='color: #000;'>Thank you for registering. Your account has been created.</p>
+                    <p style='color: #000;'>Thank you for registering. Your account has been created successfully.</p>
+                </body>
+                </html>
                 ";
 
-                $mail->send();
-                $message = "<div class='success'>Registration successful! A welcome email has been sent to $email.</div>";
-            } catch (Exception $e) {
-                $message = "<div class='error'>Email could not be sent. Mailer Error: {$mail->ErrorInfo}</div>";
+                $headers = "MIME-Version: 1.0\r\n";
+                $headers .= "Content-type:text/html;charset=UTF-8\r\n";
+                $headers .= "From: Etier Registration <no-reply@yourdomain.com>\r\n";
+
+                if (mail($to, $subject, $messageBody, $headers)) {
+                    $message = "<div class='success'>Registration successful! A welcome email has been sent to $email.</div>";
+                } else {
+                    $message = "<div class='error'>Registration saved, but email could not be sent.</div>";
+                }
+            } else {
+                $message = "<div class='error'>Database error: {$stmt->error}</div>";
             }
+
+            $stmt->close();
         } else {
-            $message = "<div class='error'>Database error: {$conn->error}</div>";
+            $message = "<div class='error'>Database prepare error: {$conn->error}</div>";
         }
     }
 
