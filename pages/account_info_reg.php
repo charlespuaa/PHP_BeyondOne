@@ -31,17 +31,17 @@ $region = $_POST['region'] ?? '';
 
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['register'])) {
     if (empty($first_name) || empty($last_name) || empty($birthday) || empty($email) || empty($contact_number)) {
-        $message = "<div class='error-text'>Please complete your personal information before registering.</div>";
+        setcookie("form_message", "<div class='error-text'>Please complete your personal information before registering.</div>", time() + 5);
     }
     elseif (empty($street_name) || empty($house_number) || empty($barangay) || empty($province) || empty($city) || empty($region) || empty($postal_code)) {
-        $message = "<div class='error-text'>Please complete your address information before registering.</div>";
+        setcookie("form_message", "<div class='error-text'>Please complete your address information before registering.</div>", time() + 5);
     }
     elseif (!preg_match("/^[A-Za-z0-9_]{3,20}$/", $username)) {
-        $message = "<div class='error-text'>Invalid username format.</div>";
+        setcookie("form_message", "<div class='error-text'>Invalid username format.</div>", time() + 5);
     } elseif (!preg_match("/^.{6,}$/", $password)) {
-        $message = "<div class='error-text'>Password must be at least 6 characters.</div>";
+        setcookie("form_message", "<div class='error-text'>Password must be at least 6 characters.</div>", time() + 5);
     } elseif ($password !== $confirm_password) {
-        $message = "<div class='error-text'>Passwords do not match.</div>";
+        setcookie("form_message", "<div class='error-text'>Passwords do not match.</div>", time() + 5);
     } else {
         $hashed_password = password_hash($password, PASSWORD_DEFAULT);
         $stmt = $conn->prepare("INSERT INTO users 
@@ -57,25 +57,32 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['register'])) {
             if ($stmt->execute()) {
                 $to = $email;
                 $subject = "Welcome to Etier!";
-                $body = "<html><body><h3>Hello $first_name!</h3><p>This is to inform you that you created an account in Etier. Please confirm by signing into our website using the credentials you have entered. If this was not you please contact us at etier@gmail.com.</p></body></html>";
+                $body = "<html><body><h3>Hello $first_name!</h3><p>This is to inform you that you created an account in Etier. Please confirm by signing into our website using the credentials you have entered. If this was not you please contact us at etiercustomerservice@gmail.com.</p></body></html>";
                 $headers = "MIME-Version: 1.0\r\n";
                 $headers .= "Content-type:text/html;charset=UTF-8\r\n";
                 $headers .= "From: Etier <no-reply@yourdomain.com>\r\n";
 
                 if (mail($to, $subject, $body, $headers)) {
-                    $message = "<div class='success'>Registered! Email sent to $email.</div>";
+                    setcookie("form_message", "<div class='success'>Registered! Email sent to $email.</div>", time() + 5);
                 } else {
-                    $message = "<div class='error-text'>Registered, but email failed to send.</div>";
+                    setcookie("form_message", "<div class='error-text'>Registered, but email failed to send.</div>", time() + 5);
                 }
                 $username = "";
             } else {
-                $message = "<div class='error-text'>DB error: {$stmt->error}</div>";
+                setcookie("form_message", "<div class='error-text'>DB error: {$stmt->error}</div>", time() + 5);
             }
             $stmt->close();
         } else {
-            $message = "<div class='error-text'>Prepare error: {$conn->error}</div>";
+            setcookie("form_message", "<div class='error-text'>Prepare error: {$conn->error}</div>", time() + 5);
         }
     }
+    header("Location: ".$_SERVER['PHP_SELF']);
+    exit;
+}
+
+if (isset($_COOKIE['form_message'])) {
+    $message = $_COOKIE['form_message'];
+    setcookie("form_message", "", time() - 3600);
 }
 ?>
 <!DOCTYPE html>
