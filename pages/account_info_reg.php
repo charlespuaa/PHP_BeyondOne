@@ -1,5 +1,4 @@
 <?php
-include 'header.php';
 $host = 'localhost';
 $db   = 'etierreg';
 $user = 'root';
@@ -31,17 +30,17 @@ $region = $_POST['region'] ?? '';
 
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['register'])) {
     if (empty($first_name) || empty($last_name) || empty($birthday) || empty($email) || empty($contact_number)) {
-        setcookie("form_message", "<div class='error-text'>Please complete your personal information before registering.</div>", time() + 5);
+        setcookie("form_message", "<div class='error-text'>Please complete your personal information before registering.</div>", time() + 5, "/");
     }
     elseif (empty($street_name) || empty($house_number) || empty($barangay) || empty($province) || empty($city) || empty($region) || empty($postal_code)) {
-        setcookie("form_message", "<div class='error-text'>Please complete your address information before registering.</div>", time() + 5);
+        setcookie("form_message", "<div class='error-text'>Please complete your address information before registering.</div>", time() + 5, "/");
     }
     elseif (!preg_match("/^[A-Za-z0-9_]{3,20}$/", $username)) {
-        setcookie("form_message", "<div class='error-text'>Invalid username format.</div>", time() + 5);
+        setcookie("form_message", "<div class='error-text'>Invalid username format.</div>", time() + 5, "/");
     } elseif (!preg_match("/^.{6,}$/", $password)) {
-        setcookie("form_message", "<div class='error-text'>Password must be at least 6 characters.</div>", time() + 5);
+        setcookie("form_message", "<div class='error-text'>Password must be at least 6 characters.</div>", time() + 5, "/");
     } elseif ($password !== $confirm_password) {
-        setcookie("form_message", "<div class='error-text'>Passwords do not match.</div>", time() + 5);
+        setcookie("form_message", "<div class='error-text'>Passwords do not match.</div>", time() + 5, "/");
     } else {
         $hashed_password = password_hash($password, PASSWORD_DEFAULT);
         $stmt = $conn->prepare("INSERT INTO users 
@@ -63,17 +62,17 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['register'])) {
                 $headers .= "From: Etier <no-reply@yourdomain.com>\r\n";
 
                 if (mail($to, $subject, $body, $headers)) {
-                    setcookie("form_message", "<div class='success'>Registered! Email sent to $email.</div>", time() + 5);
+                    setcookie("form_message", "<div class='success'>Registered! Email sent to $email.</div>", time() + 5, "/");
                 } else {
-                    setcookie("form_message", "<div class='error-text'>Registered, but email failed to send.</div>", time() + 5);
+                    setcookie("form_message", "<div class='error-text'>Registered, but email failed to send.</div>", time() + 5, "/");
                 }
                 $username = "";
             } else {
-                setcookie("form_message", "<div class='error-text'>DB error: {$stmt->error}</div>", time() + 5);
+                setcookie("form_message", "<div class='error-text'>DB error: {$stmt->error}</div>", time() + 5, "/");
             }
             $stmt->close();
         } else {
-            setcookie("form_message", "<div class='error-text'>Prepare error: {$conn->error}</div>", time() + 5);
+            setcookie("form_message", "<div class='error-text'>Prepare error: {$conn->error}</div>", time() + 5, "/");
         }
     }
     header("Location: ".$_SERVER['PHP_SELF']);
@@ -82,8 +81,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['register'])) {
 
 if (isset($_COOKIE['form_message'])) {
     $message = $_COOKIE['form_message'];
-    setcookie("form_message", "", time() - 3600);
+    setcookie("form_message", "", time() - 3600, "/");
 }
+
+// ✅ NOW include your header AFTER all header & cookie logic
+include 'header.php';
 ?>
 <!DOCTYPE html>
 <html lang="en">
