@@ -101,39 +101,6 @@
       filter: brightness(1.2);
     }
 
-    @media (max-width: 768px) {
-      .hero-image {
-        height: 250px;
-        margin-bottom: 30px;
-      }
-
-      .section-title {
-        font-size: 2.5em;
-      }
-
-      .section-content p {
-        font-size: 1em;
-      }
-
-      .team-grid {
-        grid-template-columns: 1fr;
-        text-align: center;
-        gap: 20px;
-        margin-bottom: 30px;
-      }
-
-      .team-member-info {
-        text-align: center !important;
-      }
-
-      .team-member-name {
-        font-size: 1.5em;
-      }
-
-      .team-member-image {
-        height: 200px;
-      }
-    }
   </style>
 </head>
 <body>
@@ -163,7 +130,7 @@
           <div class="team-member-role">Team Leader and Developer</div>
         </div>
         <div class="team-member-image">
-          <img src="../assets/pua_about.PNG" alt="Charles Michael Pua" loading="lazy" />
+          <img src="../assets/pua_about.jpg" alt="Charles Michael Pua" loading="lazy" />
         </div>
       </div>
 
