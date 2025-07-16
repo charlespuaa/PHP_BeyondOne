@@ -4,6 +4,8 @@
 ?>
 
 <header class="etier-header">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+
 
   <style>
     .etier-header *,
@@ -71,6 +73,11 @@
       display: block;
     }
 
+    .etier-header .logo img:hover {
+      filter: brightness(1.1);
+      transition: ease-in-out 0.3s;
+    }
+
     .etier-header .top-right {
       display: flex;
       justify-content: flex-end;
@@ -108,6 +115,12 @@
       letter-spacing: 0.5px;
       transition: all 0.3s ease;
     }
+
+    .etier-header .main-nav a:hover {
+      color: #749469ff;
+      transition: ease-in-out 0.3s;
+    }
+
 
     .etier-header .main-nav a.active,
     .etier-header .main-nav span.active {

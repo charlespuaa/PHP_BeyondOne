@@ -7,6 +7,7 @@
     font-family: 'Proxima Nova', sans-serif;
     color: #888F92;
     flex-shrink: 0;
+    height: 122px;
   "
 >
   <div style="margin-bottom: 15px;">
