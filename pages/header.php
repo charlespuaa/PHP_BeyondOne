@@ -1,5 +1,4 @@
 <?php
-  // get current page name
   $currentPage = basename($_SERVER['PHP_SELF']);
 ?>
 
@@ -7,7 +6,6 @@
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
 
   <style>
-    /* reset box model and spacing */
     .etier-header *, .etier-header *::before, .etier-header *::after {
       box-sizing: border-box;
       margin: 0;
@@ -129,12 +127,12 @@
       cursor: default;
     }
 
-    /* responsive layout for tablets and below */
+  
     @media (max-width: 768px) {
       .etier-header .top-bar {
         flex-direction: column;
         align-items: center;
-        gap: 8px; /* changed for better spacing */
+        gap: 8px; 
         padding: 10px;
       }
 
@@ -160,11 +158,10 @@
       }
 
       .etier-header .logo img {
-        width: 60px; /* smaller on mobile */
+        width: 60px;
       }
     }
 
-    /* extra small devices (mobile phones) */
     @media (max-width: 480px) {
       .etier-header .top-bar-right {
         flex-direction: column;
@@ -185,7 +182,6 @@
     }
   </style>
 
-  <!-- top bar -->
   <div class="top-bar">
     <div class="top-bar-left">ETIER</div>
     <div class="top-bar-right">
@@ -194,7 +190,6 @@
     </div>
   </div>
 
-  <!-- logo and icon section -->
   <div class="top-nav">
     <div></div>
     <div class="logo">
@@ -236,7 +231,6 @@
     </nav>
   <?php endif; ?>
 
-  <!-- highlight SIGN IN text if on signin.php -->
   <?php if ($currentPage === 'signin.php'): ?>
     <style>
       .etier-header .top-bar-right a[href="signin.php"] {
@@ -248,7 +242,6 @@
   <?php endif; ?>
 </header>
 
-<!-- highlight nav with scroll + click (only on store.php) -->
 <?php if ($currentPage === 'store.php'): ?>
 <script>
   document.addEventListener("DOMContentLoaded", () => {
@@ -289,7 +282,6 @@
 </script>
 <?php endif; ?>
 <?php
-  // get current page name
   $currentPage = basename($_SERVER['PHP_SELF']);
 ?>
 
@@ -297,7 +289,6 @@
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
 
   <style>
-    /* reset box model and spacing */
     .etier-header *, .etier-header *::before, .etier-header *::after {
       box-sizing: border-box;
       margin: 0;
@@ -419,12 +410,11 @@
       cursor: default;
     }
 
-    /* responsive layout for tablets and below */
     @media (max-width: 768px) {
       .etier-header .top-bar {
         flex-direction: column;
         align-items: center;
-        gap: 8px; /* changed for better spacing */
+        gap: 8px;
         padding: 10px;
       }
 
@@ -450,11 +440,10 @@
       }
 
       .etier-header .logo img {
-        width: 60px; /* smaller on mobile */
+        width: 60px;
       }
     }
 
-    /* extra small devices (mobile phones) */
     @media (max-width: 480px) {
       .etier-header .top-bar-right {
         flex-direction: column;
@@ -475,7 +464,6 @@
     }
   </style>
 
-  <!-- top bar -->
   <div class="top-bar">
     <div class="top-bar-left">ETIER</div>
     <div class="top-bar-right">
@@ -484,7 +472,6 @@
     </div>
   </div>
 
-  <!-- logo and icon section -->
   <div class="top-nav">
     <div></div>
     <div class="logo">
@@ -497,7 +484,6 @@
     </div>
   </div>
 
-  <!-- nav links shown only if not on about page or sign in -->
   <?php if ($currentPage !== 'about_us.php' && $currentPage !== 'signin.php'): ?>
     <nav class="main-nav">
       <?php
@@ -526,7 +512,6 @@
     </nav>
   <?php endif; ?>
 
-  <!-- highlight SIGN IN text if on signin.php -->
   <?php if ($currentPage === 'signin.php'): ?>
     <style>
       .etier-header .top-bar-right a[href="signin.php"] {
@@ -538,7 +523,6 @@
   <?php endif; ?>
 </header>
 
-<!-- highlight nav with scroll + click (only on store.php) -->
 <?php if ($currentPage === 'store.php'): ?>
 <script>
   document.addEventListener("DOMContentLoaded", () => {
