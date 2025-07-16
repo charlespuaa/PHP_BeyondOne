@@ -91,6 +91,7 @@ include 'header.php';
         text-align: center;
         margin-bottom: 30px;
         font-size: 2rem;
+        color: #E6BD37;
     }
 
     fieldset {
@@ -256,7 +257,7 @@ include 'header.php';
     <h1>Sign In</h1>
     <form method="post">
         <fieldset>
-            <legend>Login</legend>
+            <legend>Sign In</legend>
             <label>Username</label>
             <input type="text" name="username" required>
 
