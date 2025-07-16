@@ -45,7 +45,7 @@ while ($row = $result->fetch_assoc()) {
       grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
       gap: 20px;
       max-width: 1200px;
-      margin: 220px auto 60px auto;
+      margin: 150px auto 60px auto;
       padding: 0 20px;
     }
     .hero-banner {

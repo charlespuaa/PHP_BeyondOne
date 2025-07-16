@@ -1,12 +1,10 @@
 <?php
-  // get current page name to apply conditional logic
+  // get current page name
   $currentPage = basename($_SERVER['PHP_SELF']);
 ?>
 
-<!-- header start -->
 <header class="etier-header">
 
-  <!-- scoped styles for the header only -->
   <style>
     .etier-header *,
     .etier-header *::before,
@@ -68,7 +66,7 @@
     }
 
     .etier-header .logo img {
-      width: 60px;
+      width: 80px;
       object-fit: contain;
       display: block;
     }
@@ -108,6 +106,7 @@
       text-transform: uppercase;
       padding: 8px;
       letter-spacing: 0.5px;
+      transition: all 0.3s ease;
     }
 
     .etier-header .main-nav a.active,
@@ -120,7 +119,6 @@
       cursor: default;
     }
 
-    /* responsive styling */
     @media (max-width: 768px) {
       .etier-header .top-bar,
       .etier-header .top-nav {
@@ -143,7 +141,7 @@
     }
   </style>
 
-  <!-- top bar with site name and links -->
+  <!-- top bar -->
   <div class="top-bar">
     <div class="top-bar-left">ETIER</div>
     <div class="top-bar-right">
@@ -152,7 +150,7 @@
     </div>
   </div>
 
-  <!-- logo and icons section -->
+  <!-- logo and icon section -->
   <div class="top-nav">
     <div></div>
     <div class="logo">
@@ -165,11 +163,10 @@
     </div>
   </div>
 
-  <!-- conditional: only show nav if not on about page -->
+  <!-- nav links shown only if not on about page -->
   <?php if ($currentPage !== 'about_us.php'): ?>
     <nav class="main-nav">
       <?php
-        // list of categories
         $categories = [
           'hatsandcaps' => 'hats and caps',
           'eyewear' => 'eyewear',
@@ -182,10 +179,8 @@
           'fragrance' => 'fragrance'
         ];
 
-        // check if this is the product page
         $isProductPage = $currentPage === 'product.php';
 
-        // render nav links or span depending on active category
         foreach ($categories as $key => $label) {
           if ($isProductPage && isset($activeCategory) && $activeCategory === $key) {
             echo "<span class='active'>$label</span>";
@@ -196,5 +191,48 @@
       ?>
     </nav>
   <?php endif; ?>
+
 </header>
-<!-- header end -->
+
+<!-- highlight nav with scroll + click (only on store.php) -->
+<?php if ($currentPage === 'store.php'): ?>
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const sections = [
+      'hatsandcaps', 'eyewear', 'tops', 'jackets',
+      'bottoms', 'accessories', 'handbags', 'shoes', 'fragrance'
+    ];
+
+    const navLinks = document.querySelectorAll('.main-nav a');
+
+    // manually highlight when link is clicked
+    navLinks.forEach(link => {
+      link.addEventListener('click', function () {
+        navLinks.forEach(l => l.classList.remove('active'));
+        this.classList.add('active');
+      });
+    });
+
+    // auto highlight on scroll
+    window.addEventListener('scroll', () => {
+      let current = '';
+      sections.forEach(section => {
+        const el = document.getElementById(section);
+        if (el) {
+          const sectionTop = el.offsetTop - 150;
+          if (scrollY >= sectionTop) {
+            current = section;
+          }
+        }
+      });
+
+      navLinks.forEach(link => {
+        link.classList.remove('active');
+        if (link.getAttribute('href') === '#' + current) {
+          link.classList.add('active');
+        }
+      });
+    });
+  });
+</script>
+<?php endif; ?>
