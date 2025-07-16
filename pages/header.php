@@ -1,5 +1,12 @@
-<!-- HEADER.PHP -->
+<?php
+  // get current page name to apply conditional logic
+  $currentPage = basename($_SERVER['PHP_SELF']);
+?>
+
+<!-- header start -->
 <header class="etier-header">
+
+  <!-- scoped styles for the header only -->
   <style>
     .etier-header *,
     .etier-header *::before,
@@ -49,7 +56,7 @@
     }
 
     .etier-header .top-bar-right a:hover {
-      color: #E6BD37;
+      color: #e6bd37;
     }
 
     .etier-header .top-nav {
@@ -80,7 +87,7 @@
     }
 
     .etier-header .top-right a:hover {
-      color: #E6BD37;
+      color: #e6bd37;
     }
 
     .etier-header .main-nav {
@@ -105,14 +112,15 @@
 
     .etier-header .main-nav a.active,
     .etier-header .main-nav span.active {
-      color: #E6BD37;
-      border-bottom: 2px solid #E6BD37;
+      color: #e6bd37;
+      border-bottom: 2px solid #e6bd37;
     }
 
     .etier-header .main-nav span {
       cursor: default;
     }
 
+    /* responsive styling */
     @media (max-width: 768px) {
       .etier-header .top-bar,
       .etier-header .top-nav {
@@ -135,6 +143,7 @@
     }
   </style>
 
+  <!-- top bar with site name and links -->
   <div class="top-bar">
     <div class="top-bar-left">ETIER</div>
     <div class="top-bar-right">
@@ -143,11 +152,12 @@
     </div>
   </div>
 
+  <!-- logo and icons section -->
   <div class="top-nav">
     <div></div>
     <div class="logo">
       <a href="store.php">
-        <img src="../assets/etier_logo_transparent.png" alt="ETIER Logo" />
+        <img src="../assets/etier_logo_transparent.png" alt="etier logo" />
       </a>
     </div>
     <div class="top-right">
@@ -155,29 +165,36 @@
     </div>
   </div>
 
-  <nav class="main-nav">
-    <?php
-      $categories = [
-        'hatsandcaps' => 'Hats and Caps',
-        'eyewear' => 'Eyewear',
-        'tops' => 'Top',
-        'jackets' => 'Jackets',
-        'bottoms' => 'Bottom',
-        'accessories' => 'Accessories',
-        'handbags' => 'Hand Bags',
-        'shoes' => 'Shoes',
-        'fragrance' => 'Fragrance'
-      ];
+  <!-- conditional: only show nav if not on about page -->
+  <?php if ($currentPage !== 'about_us.php'): ?>
+    <nav class="main-nav">
+      <?php
+        // list of categories
+        $categories = [
+          'hatsandcaps' => 'hats and caps',
+          'eyewear' => 'eyewear',
+          'tops' => 'top',
+          'jackets' => 'jackets',
+          'bottoms' => 'bottom',
+          'accessories' => 'accessories',
+          'handbags' => 'hand bags',
+          'shoes' => 'shoes',
+          'fragrance' => 'fragrance'
+        ];
 
-      $isProductPage = basename($_SERVER['PHP_SELF']) === 'product.php';
+        // check if this is the product page
+        $isProductPage = $currentPage === 'product.php';
 
-      foreach ($categories as $key => $label) {
-        if ($isProductPage && isset($activeCategory) && $activeCategory === $key) {
-          echo "<span class='active'>$label</span>";
-        } else {
-          echo "<a href='#$key' " . (isset($activeCategory) && $activeCategory === $key ? "class='active'" : "") . ">$label</a>";
+        // render nav links or span depending on active category
+        foreach ($categories as $key => $label) {
+          if ($isProductPage && isset($activeCategory) && $activeCategory === $key) {
+            echo "<span class='active'>$label</span>";
+          } else {
+            echo "<a href='#$key' " . (isset($activeCategory) && $activeCategory === $key ? "class='active'" : "") . ">$label</a>";
+          }
         }
-      }
-    ?>
-  </nav>
+      ?>
+    </nav>
+  <?php endif; ?>
 </header>
+<!-- header end -->
