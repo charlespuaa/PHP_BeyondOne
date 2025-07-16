@@ -93,10 +93,10 @@ include 'header.php';
     <title>Registration</title>
     <style>
     h1 {
-    text-align: center;
-    margin-bottom: 30px;
-    font-size: 2rem;
-    color: #E6BD37; 
+        text-align: center;
+        margin-bottom: 30px;
+        font-size: 2rem;
+        color: #E6BD37; 
     }
 
     body {
@@ -189,7 +189,46 @@ include 'header.php';
         transform: translateY(-3px);
         box-shadow: 0 6px 18px rgba(0,0,0,0.15);
     }
+
+    /* responsiveness across devices */
+    @media (max-width: 768px) {
+        body {
+            padding-top: 130px;
+            padding-left: 10px;
+            padding-right: 10px;
+        }
+
+        h1 {
+            font-size: 1.6rem;
+        }
+
+        input[type="submit"], .signin-button {
+            font-size: 0.95rem;
+            padding: 10px;
+        }
+
+        label {
+            font-size: 0.9rem;
+        }
+    }
+
+    @media (max-width: 480px) {
+        h1 {
+            font-size: 1.3rem;
+        }
+
+        input[type="text"], input[type="password"] {
+            font-size: 0.95rem;
+            padding: 8px;
+        }
+
+        input[type="submit"], .signin-button {
+            font-size: 0.9rem;
+            padding: 8px 16px;
+        }
+    }
 </style>
+
 </head>
 <body>
 
