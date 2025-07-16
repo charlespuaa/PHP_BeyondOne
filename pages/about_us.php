@@ -9,7 +9,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet"/>
 
   <style>
-    * {
+    .about-container {
       margin: 0;
       padding: 0;
       font-family: 'Poppins', sans-serif;
@@ -19,7 +19,7 @@
       background: #fff9f9ff;
       color: #333;
       line-height: 1.6;
-      padding: 0; 
+      padding-top: 150px; /* Adjusted padding for header */
     }
 
     .about-container {
@@ -104,6 +104,8 @@
   </style>
 </head>
 <body>
+  <?php include 'header.php'; ?>
+  
 
   <img 
     src="../assets/about_etier_banner.png" 

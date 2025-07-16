@@ -1,6 +1,5 @@
 <?php
 include '../db.php';
-include 'header.php';
 
 if (!isset($_GET['id'])) {
   die('Product ID missing.');
@@ -28,13 +27,13 @@ $imageToShow = ($view === 'back') ? $product['hover_image'] : $product['image'];
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title><?= htmlspecialchars($product['name']) ?> | Etier Clothing</title>
+  
   <style>
     body {
       font-family: 'Proxima Nova', sans-serif;
       margin: 0;
       padding: 40px, 0px;
       background-color: #F9F9F9;
-      overflow: hidden;
       margin: 0;
     }
 
@@ -181,6 +180,7 @@ $imageToShow = ($view === 'back') ? $product['hover_image'] : $product['image'];
   </style>
 </head>
 <body>
+  <?php include 'header.php'; ?>
   <div class="product-page">
     <!-- img gallery -->
     <div class="gallery-section">
@@ -228,5 +228,6 @@ $imageToShow = ($view === 'back') ? $product['hover_image'] : $product['image'];
   </div>
 
 </body>
-<?php include 'footer.php'; ?>
+<footer><?php include 'footer.php'; ?></footer>
+
 </html>
