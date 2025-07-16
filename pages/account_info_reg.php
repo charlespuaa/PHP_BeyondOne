@@ -92,6 +92,13 @@ include 'header.php';
     <meta charset="UTF-8">
     <title>Registration</title>
     <style>
+    h1 {
+    text-align: center;
+    margin-bottom: 30px;
+    font-size: 2rem;
+    color: #E6BD37; 
+    }
+
     body {
         font-family: Arial, sans-serif;
         color: #000;
