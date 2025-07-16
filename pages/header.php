@@ -19,10 +19,17 @@
       font-family: 'Proxima Nova', sans-serif;
       width: 100%;
       overflow-x: hidden;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    .page-wrapper {
+      flex: 1;
     }
 
     body {
-      padding-top: 120px; 
+      padding-top: 120px;
     }
 
     header {
@@ -35,23 +42,21 @@
       border-bottom: 1px solid #eee;
     }
 
-    /* --- TOP BAR --- */
     .top-bar {
-
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 15px 20px;
+      padding: 7px 20px;
       font-size: 13px;
       background-color: #fff;
       border-bottom: 1px solid #eee;
+      min-height: 7px;
     }
 
     .top-bar-left {
       color: #000;
-      font-weight: 500;
+      font-weight: 700;
       font-size: 16px;
-      font-weight:700;
     }
 
     .top-bar-right {
@@ -72,13 +77,12 @@
       color: #E6BD37;
     }
 
-    /* --- MAIN HEADER SECTION --- */
     .top-nav {
       display: grid;
       grid-template-columns: 1fr auto 1fr;
       align-items: center;
-      padding: 5px 20px;         /* reduced vertical padding */
-      min-height: 80px;          /* ensures proper height */
+      padding: 5px 20px;
+      min-height: 50px;
     }
 
     .logo {
@@ -88,7 +92,7 @@
     }
 
     .logo img {
-      width: 60px;              
+      width: 60px;
       height: auto;
       max-width: 100%;
       object-fit: contain;
@@ -114,7 +118,6 @@
       color: #E6BD37;
     }
 
-    /* --- NAVIGATION --- */
     .main-nav {
       display: flex;
       justify-content: center;
@@ -123,7 +126,8 @@
       border-top: 1px solid #eee;
     }
 
-    .main-nav a {
+    .main-nav a,
+    .main-nav span {
       text-decoration: none;
       color: #333;
       font-size: 13px;
@@ -134,12 +138,16 @@
       transition: 0.3s;
     }
 
-    .main-nav a.active {
+    .main-nav a.active,
+    .main-nav span.active {
       color: #E6BD37;
       border-bottom: 2px solid #E6BD37;
     }
 
-    /* --- RESPONSIVE --- */
+    .main-nav span {
+      cursor: default;
+    }
+
     @media (max-width: 768px) {
       .top-bar, .top-nav {
         flex-direction: column;
@@ -168,7 +176,7 @@
   <div class="top-bar">
     <div class="top-bar-left">ETIER</div>
     <div class="top-bar-right">
-      <a href="#">ABOUT US</a>
+      <a href="about_us.php">ABOUT US</a>
       <a href="#">SIGN IN</a>
     </div>
   </div>
@@ -177,7 +185,9 @@
   <div class="top-nav">
     <div></div>
     <div class="logo">
-      <img src="../assets/etierlogoandtext-png.png" alt="ETIER Logo">
+      <a href="store.php">
+        <img src="../assets/etier_logo_transparent.png" alt="ETIER Logo">
+      </a>
     </div>
     <div class="top-right">
       <a href="#"><i class="fas fa-shopping-bag"></i></a>
@@ -186,27 +196,73 @@
 
   <!-- Navigation Categories -->
   <nav class="main-nav">
-    <a href="#hatsandcaps">Hats and Caps</a>
-    <a href="#eyewear">Eyewear</a>
-    <a href="#tops">Top</a>
-    <a href="#jackets">Jackets</a>
-    <a href="#bottoms">Bottom</a>
-    <a href="#accessories">Accessories</a>
-    <a href="#handbags">Hand Bags</a>
-    <a href="#shoes">Shoes</a>
-    <a href="#fragrance">Fragrance</a>
+    <?php
+      $categories = [
+        'hatsandcaps' => 'Hats and Caps',
+        'eyewear' => 'Eyewear',
+        'tops' => 'Top',
+        'jackets' => 'Jackets',
+        'bottoms' => 'Bottom',
+        'accessories' => 'Accessories',
+        'handbags' => 'Hand Bags',
+        'shoes' => 'Shoes',
+        'fragrance' => 'Fragrance'
+      ];
+
+      $isProductPage = basename($_SERVER['PHP_SELF']) === 'product.php';
+
+      foreach ($categories as $key => $label) {
+        if ($isProductPage && isset($activeCategory) && $activeCategory === $key) {
+          echo "<span class='active'>$label</span>";
+        } else {
+          echo "<a href='#$key' " . (isset($activeCategory) && $activeCategory === $key ? "class='active'" : "") . ">$label</a>";
+        }
+      }
+    ?>
   </nav>
 </header>
 
 <script>
-  const navLinks = document.querySelectorAll('.main-nav a');
-  navLinks.forEach(link => {
-    link.addEventListener('click', function () {
-      navLinks.forEach(l => l.classList.remove('active'));
-      this.classList.add('active');
+  document.addEventListener("DOMContentLoaded", () => {
+    const sections = [
+      'hatsandcaps', 'eyewear', 'tops', 'jackets',
+      'bottoms', 'accessories', 'handbags', 'shoes', 'fragrance'
+    ];
+
+    const navLinks = document.querySelectorAll('.main-nav a');
+
+    // Manual click highlight (keep this)
+    navLinks.forEach(link => {
+      link.addEventListener('click', function () {
+        navLinks.forEach(l => l.classList.remove('active'));
+        this.classList.add('active');
+      });
+    });
+
+    // Scroll-based highlight
+    window.addEventListener('scroll', () => {
+      let current = '';
+
+      sections.forEach(section => {
+        const el = document.getElementById(section);
+        if (el) {
+          const sectionTop = el.offsetTop - 150;
+          if (scrollY >= sectionTop) {
+            current = section;
+          }
+        }
+      });
+
+      navLinks.forEach(link => {
+        link.classList.remove('active');
+        if (link.getAttribute('href') === '#' + current) {
+          link.classList.add('active');
+        }
+      });
     });
   });
 </script>
+
 
 </body>
 </html>

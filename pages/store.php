@@ -267,6 +267,8 @@ while ($row = $result->fetch_assoc()) {
     </div>
   <?php endforeach; ?>
 </div>
-
 </body>
 </html>
+
+
+<?php include 'footer.php'; ?>

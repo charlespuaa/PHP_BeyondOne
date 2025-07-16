@@ -17,6 +17,8 @@ if ($result->num_rows === 0) {
 }
 
 $product = $result->fetch_assoc();
+
+$activeCategory = strtolower(str_replace(' ', '', $product['category'])); // for header nav highlighting
 $imageToShow = ($view === 'back') ? $product['hover_image'] : $product['image'];
 ?>
 
@@ -30,15 +32,18 @@ $imageToShow = ($view === 'back') ? $product['hover_image'] : $product['image'];
     body {
       font-family: 'Proxima Nova', sans-serif;
       margin: 0;
-      padding: 40px;
+      padding: 40px, 0px;
       background-color: #F9F9F9;
+      overflow: hidden;
+      margin: 0;
     }
 
     .product-page {
+      margin: 100px auto  auto; /* top center bottom center */
       max-width: 1200px;
-      margin: auto;
       display: flex;
       gap: 40px;
+      padding: 0 20px; /* optional horizontal padding */
     }
 
     .gallery-section {
@@ -221,5 +226,7 @@ $imageToShow = ($view === 'back') ? $product['hover_image'] : $product['image'];
       </div>
     </div>
   </div>
+
 </body>
+<?php include 'footer.php'; ?>
 </html>
