@@ -2,7 +2,7 @@
 $server = "localhost";
 $user = "root";
 $password = "";
-$database = "etierproducts"; // or "etierregistration" if you want to connect to the registration database
+$database = "etierproducts"; 
 
 $conn = new mysqli($server, $user, $password, $database);
 
