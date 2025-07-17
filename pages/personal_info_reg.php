@@ -5,51 +5,147 @@
     <meta charset="UTF-8">
     <title>Registration</title>
     <style>
+    body {
+        font-family: Arial, sans-serif;
+        color: #000;
+        background: #fff;
+        padding: 20px;
+        padding-top: 170px; 
+    }
+
+    h1 {
+        text-align: center;
+        margin-bottom: 30px;
+        font-size: 2rem;
+        color: #E6BD37;
+    }
+
+    fieldset {
+        border: 2px solid #E6BD37;
+        border-radius: 10px;
+        padding: 20px;
+        background: #fff;
+        max-width: 500px;
+        margin: auto;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    fieldset:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 6px 18px rgba(0,0,0,0.15);
+    }
+
+    legend {
+        font-weight: bold;
+        color: #E6BD37;
+    }
+
+    label {
+        display: block;
+        margin-top: 15px;
+    }
+
+    input[type="text"], input[type="date"], input[type="password"] {
+        width: 100%;
+        padding: 8px;
+        margin-top: 5px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        background: #F9F9F9;
+        box-sizing: border-box;
+    }
+
+    input[type="submit"], .signin-button {
+        background: #E6BD37;
+        color: #fff;
+        font-weight: bold;
+        margin-top: 20px;
+        padding: 12px;
+        width: 100%;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: background 0.3s, color 0.3s, border 0.3s;
+    }
+
+    input[type="submit"]:hover, .signin-button:hover {
+        background: #fff;
+        color: #E6BD37;
+        border: 2px solid #E6BD37;
+    }
+
+    .success, .error-text {
+        text-align: center;
+        padding: 5px;
+        margin-top: 10px;
+        font-size: 14px;
+    }
+
+    .success { color: green; }
+    .error-text { color: red; }
+
+    .back-container {
+        max-width: 500px;
+        margin: 20px auto;
+        padding: 15px;
+        border: 2px solid #E6BD37;
+        border-radius: 10px;
+        text-align: center;
+        background: #fff;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .back-container:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 6px 18px rgba(0,0,0,0.15);
+    }
+
+    /* responsiveness across devices */
+    @media (max-width: 768px) {
         body {
-            font-family: Arial, sans-serif;
-            color: #000;
-            background: #fff;
-            padding: 20px;
-            padding-top: 200px;
+            padding-top: 130px; 
+            padding-left: 10px;
+            padding-right: 10px;
         }
-        fieldset {
-            border: 2px solid #E6BD37;
-            border-radius: 10px;
-            padding: 20px;
-            background: #F9F9F9;
-            max-width: 500px;
-            margin: auto;
+
+        h1 {
+            font-size: 1.6rem;
         }
-        legend {
-            font-weight: bold;
-            color: #E6BD37;
+
+        input[type="submit"], .signin-button {
+            font-size: 0.95rem;
+            padding: 10px;
         }
+
         label {
-            display: block;
-            margin-top: 15px;
+            font-size: 0.9rem;
         }
-        input[type="text"], input[type="date"] {
-            width: 100%;
+    }
+
+    @media (max-width: 480px) {
+        body {
+            padding-top: 110px; 
+        }
+
+        h1 {
+            font-size: 1.3rem;
+        }
+
+        input[type="text"], input[type="date"], input[type="password"] {
+            font-size: 0.95rem;
             padding: 8px;
-            margin-top: 5px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
         }
-        input[type="submit"] {
-            background: #E6BD37;
-            color: #000;
-            font-weight: bold;
-            margin-top: 20px;
-            padding: 12px;
-            width: 100%;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
+
+        input[type="submit"], .signin-button {
+            font-size: 0.9rem;
+            padding: 8px 16px;
         }
-        input[type="submit"]:hover {
-            background: #d9aa2f;
-        }
-    </style>
+    }
+</style>
+
+
 </head>
 <body>
 

@@ -17,7 +17,7 @@ if ($result->num_rows === 0) {
 
 $product = $result->fetch_assoc();
 
-$activeCategory = strtolower(str_replace(' ', '', $product['category'])); // for header nav highlighting
+$activeCategory = strtolower(str_replace(' ', '', $product['category']));
 $imageToShow = ($view === 'back') ? $product['hover_image'] : $product['image'];
 ?>
 
@@ -27,22 +27,33 @@ $imageToShow = ($view === 'back') ? $product['hover_image'] : $product['image'];
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title><?= htmlspecialchars($product['name']) ?> | Etier Clothing</title>
-  
+  <?php include 'header.php'; ?>
   <style>
     body {
       font-family: 'Proxima Nova', sans-serif;
+      background-color: #f9f9f9;
       margin: 0;
-      padding: 40px, 0px;
-      background-color: #F9F9F9;
-      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    .page-content {
+      flex: 1;
+    }
+
+    .page-wrapper {
+      padding-top: 190px;
+      padding-bottom: 90px;
     }
 
     .product-page {
-      margin: 100px auto  auto; /* top center bottom center */
+      margin: 0 auto;
       max-width: 1200px;
       display: flex;
       gap: 40px;
-      padding: 0 20px; /* optional horizontal padding */
+      padding: 0 20px;
     }
 
     .gallery-section {
@@ -119,11 +130,10 @@ $imageToShow = ($view === 'back') ? $product['hover_image'] : $product['image'];
       transition: all 0.3s ease;
     }
 
-    /* Hover effect for size and color buttons */
     .sizes button:hover,
     .colors button:hover {
-      border-color: #ffffffff;
-      background-color: #000000ff;
+      border-color: #000000;
+      background-color: #000000;
       color: white;
     }
 
@@ -143,20 +153,16 @@ $imageToShow = ($view === 'back') ? $product['hover_image'] : $product['image'];
       transition: background-color 0.3s ease, color 0.3s ease;
     }
 
-    /* Hover for Add to Bag button */
     .actions button:hover:not(.buy-now) {
       background-color: #E6BD37;
     }
-    
 
-    /* Buy Now button */
     .actions .buy-now {
       background: white;
       color: black;
       border: 2px solid black;
     }
 
-    /* Hover for Buy Now button */
     .actions .buy-now:hover {
       background-color: #000000;
       color: white;
@@ -176,58 +182,65 @@ $imageToShow = ($view === 'back') ? $product['hover_image'] : $product['image'];
         flex-direction: row;
         justify-content: center;
       }
+
+      .main-image img {
+        width: 100%;
+        height: auto;
+      }
     }
   </style>
 </head>
 <body>
-  <?php include 'header.php'; ?>
-  <div class="product-page">
-    <!-- img gallery -->
-    <div class="gallery-section">
-      <!-- thumbnails -->
-      <div class="thumbnails">
-        <a href="?id=<?= $id ?>&view=front" class="<?= ($view === 'front') ? 'active' : '' ?>">
-          <img src="../assets/<?= $product['image'] ?>" alt="Front">
-        </a>
-        <a href="?id=<?= $id ?>&view=back" class="<?= ($view === 'back') ? 'active' : '' ?>">
-          <img src="../assets/<?= $product['hover_image'] ?>" alt="Back">
-        </a>
-      </div>
+  <div class="page-content">
+    <div class="page-wrapper">
+      <div class="product-page">
+        <!-- image gallery -->
+        <div class="gallery-section">
+          <!-- thumbnails -->
+          <div class="thumbnails">
+            <a href="?id=<?= $id ?>&view=front" class="<?= ($view === 'front') ? 'active' : '' ?>">
+              <img src="../assets/<?= $product['image'] ?>" alt="Front">
+            </a>
+            <a href="?id=<?= $id ?>&view=back" class="<?= ($view === 'back') ? 'active' : '' ?>">
+              <img src="../assets/<?= $product['hover_image'] ?>" alt="Back">
+            </a>
+          </div>
 
-      <!-- main image -->
-      <div class="main-image">
-        <img src="../assets/<?= $imageToShow ?>" alt="<?= htmlspecialchars($product['name']) ?>">
-      </div>
-    </div>
+          <!-- main image -->
+          <div class="main-image">
+            <img src="../assets/<?= $imageToShow ?>" alt="<?= htmlspecialchars($product['name']) ?>">
+          </div>
+        </div>
 
-    <!-- product info -->
-    <div class="product-details">
-      <div class="product-name"><?= htmlspecialchars($product['name']) ?></div>
-      <div class="product-brand">Etier</div>
-      <div class="product-price">₱<?= number_format($product['price'], 2) ?></div>
+        <!-- product info -->
+        <div class="product-details">
+          <div class="product-name"><?= htmlspecialchars($product['name']) ?></div>
+          <div class="product-brand">Etier</div>
+          <div class="product-price">₱<?= number_format($product['price'], 2) ?></div>
 
-      <div class="product-description">
-        <strong>Description:</strong>
-        <p style="margin-top: 10px; line-height: 1.6; color: #444;">
-          <?= nl2br(htmlspecialchars($product['description'])) ?>
-        </p>
-      </div>
+          <div class="product-description">
+            <strong>Description:</strong>
+            <p style="margin-top: 10px; line-height: 1.6; color: #444;">
+              <?= nl2br(htmlspecialchars($product['description'])) ?>
+            </p>
+          </div>
 
-      <div class="sizes">
-        <strong>Size:</strong><br>
-        <?php foreach (['XS', 'S', 'M', 'L', 'XL'] as $size): ?>
-          <button><?= $size ?></button>
-        <?php endforeach; ?>
-      </div>
+          <div class="sizes">
+            <strong>Size:</strong><br>
+            <?php foreach (['XS', 'S', 'M', 'L', 'XL'] as $size): ?>
+              <button><?= $size ?></button>
+            <?php endforeach; ?>
+          </div>
 
-      <div class="actions">
-        <button>Add to Bag</button>
-        <button class="buy-now">Buy Now</button>
+          <div class="actions">
+            <button>Add to Bag</button>
+            <button class="buy-now">Buy Now</button>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 
+  <?php include 'footer.php'; ?>
 </body>
-<footer><?php include 'footer.php'; ?></footer>
-
 </html>

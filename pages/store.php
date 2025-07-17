@@ -35,17 +35,21 @@ while ($row = $result->fetch_assoc()) {
       box-sizing: border-box;
       font-family: Proxima Nova, sans-serif;
     }
-    body {
-      margin: 0;
+    .store-container { /*kailangan to para sa footer na di mag ka padding okay  */
       padding: 20px;
+      margin: 0;
       background: #fff9f9ff;
+      flex: 1;
+      margin-top: 40px; /* Adjusted for header height */
     }
+
+    
     .hero-banners-container {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
       gap: 20px;
       max-width: 1200px;
-      margin: 220px auto 60px auto;
+      margin: 150px auto 60px auto;
       padding: 0 20px;
     }
     .hero-banner {
@@ -85,11 +89,7 @@ while ($row = $result->fetch_assoc()) {
       text-align: center;
       padding: 20px;
     }
-    .store-container {
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 0 20px;
-    }
+    
     .category-section {
       margin-bottom: 40px;
       scroll-margin-top: 140px;
@@ -228,6 +228,8 @@ while ($row = $result->fetch_assoc()) {
 </head>
 <body>
 
+<div class="store-container">
+  <!-- Hero Banners -->
  <div class="hero-banners-container">
         <a href="#tops" class="hero-banner">
             <img src="../assets/accessories_look.jpg" alt="Smart Casual">
@@ -266,6 +268,7 @@ while ($row = $result->fetch_assoc()) {
       </div>
     </div>
   <?php endforeach; ?>
+  </div>
 </div>
 </body>
 <?php include 'footer.php'; ?>

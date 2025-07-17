@@ -1,25 +1,58 @@
-<footer
-  style="
+<!-- updated footer with responsive and sticky behavior -->
+<footer class="etier-footer">
+  <div class="footer-logo">
+    <img src="../assets/bj_logo_transparent.png" alt="BeyondOne Logo">
+  </div>
+  <div class="footer-text">
+    &copy; <?= date('Y') ?> <strong>BeyondOne</strong> | Etier Clothing
+  </div>
+  <div class="footer-subtext">
+    this website is for <strong>educational purposes only</strong> and is a final project requirement.
+  </div>
+</footer>
+
+<!-- responsiveness and sticky footer styles -->
+<style>
+  .etier-footer {
     background: #fff;
     border-top: 1px solid #eee;
-    padding-top: 20px;
     text-align: center;
     font-family: 'Proxima Nova', sans-serif;
     color: #888F92;
+    padding: 20px 10px;
     flex-shrink: 0;
-  "
->
-  <div style="margin-bottom: 15px;">
-    <img
-      src="../assets/bj_logo_transparent.png"
-      alt="BeyondOne Logo"
-      style="width: 110px; height: auto;"
-    >
-  </div>
-  <div style="font-size: 14px; margin-bottom: 5px;">
-    &copy; <?= date('Y') ?> <strong style="color:#000;">BeyondOne</strong> | Etier Clothing
-  </div>
-  <div style="font-size: 13px; padding-top: 8px; color: #888F92;">
-    This website is for <strong>educational purposes only</strong> and is a final project requirement.
-  </div>
-</footer>
+  }
+
+  .etier-footer img {
+    width: 110px;
+    height: auto;
+    margin-bottom: 15px;
+  }
+
+  .etier-footer .footer-text {
+    font-size: 14px;
+    margin-bottom: 5px;
+    color: #888F92;
+  }
+
+  .etier-footer .footer-subtext {
+    font-size: 13px;
+    color: #888F92;
+  }
+
+  .etier-footer strong {
+    color: #000;
+  }
+
+  @media (max-width: 600px) {
+    .etier-footer .footer-text,
+    .etier-footer .footer-subtext {
+      font-size: 12px;
+      padding: 0 10px;
+    }
+
+    .etier-footer img {
+      width: 90px;
+    }
+  }
+</style>

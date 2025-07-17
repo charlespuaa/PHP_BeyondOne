@@ -59,113 +59,229 @@ include 'header.php';
 <head>
     <meta charset="UTF-8">
     <title>Sign In - Etier</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"> <!-- added viewport for mobile scaling -->
     <style>
+    /* sticky footer base layout */
+    html, body {
+        height: 100%;
+        margin: 0;
+        padding: 0;
+    }
+
+    .page-wrapper {
+        min-height: 100%;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .page-wrapper main {
+        flex: 1;
+    }
+
+    body {
+        font-family: Arial, sans-serif;
+        color: #000;
+        background: #fff;
+        padding: 20px;
+        padding-top: 150px;
+        margin-bottom: 90px;
+    }
+
+    h1 {
+        text-align: center;
+        margin-bottom: 30px;
+        font-size: 2rem;
+        color: #E6BD37;
+    }
+
+    fieldset {
+        border: 2px solid #E6BD37;
+        border-radius: 10px;
+        padding: 20px;
+        background: #fff;
+        max-width: 400px;
+        margin: auto;
+        width: 90%;
+        box-sizing: border-box;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    fieldset:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 6px 18px rgba(0,0,0,0.15);
+    }
+
+    legend {
+        font-weight: bold;
+        color: #E6BD37;
+    }
+
+    label {
+        display: block;
+        margin-top: 15px;
+        font-size: 0.95rem;
+    }
+
+    input[type="text"], input[type="password"] {
+        width: 100%;
+        padding: 10px;
+        margin-top: 5px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        font-size: 1rem;
+        background: #F9F9F9;
+        box-sizing: border-box;
+    }
+
+    .error-text {
+        color: red;
+        font-size: 14px;
+        margin-top: 10px;
+        text-align: center;
+    }
+
+    input[type="submit"] {
+        background: #E6BD37;
+        color: #fff;
+        font-weight: bold;
+        margin-top: 20px;
+        padding: 12px;
+        width: 100%;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 1rem;
+        transition: background 0.3s, color 0.3s, border 0.3s;
+    }
+
+    input[type="submit"]:hover {
+        background: #fff;
+        color: #E6BD37;
+        border: 2px solid #E6BD37;
+    }
+
+    .register-link {
+        max-width: 400px;
+        width: 90%;
+        margin: 30px auto 0;
+        padding: 15px;
+        border: 2px solid #E6BD37;
+        border-radius: 10px;
+        background: #fff;
+        text-align: center;
+        box-sizing: border-box;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .register-link:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 6px 18px rgba(0,0,0,0.15);
+    }
+
+    .register-link p {
+        margin-bottom: 10px;
+        font-size: 0.95rem;
+    }
+
+    .register-link button {
+        background: #E6BD37;
+        color: #fff;
+        font-weight: bold;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 1rem;
+        transition: background 0.3s, color 0.3s, border 0.3s;
+    }
+
+    .register-link button:hover {
+        background: #fff;
+        color: #E6BD37;
+        border: 2px solid #E6BD37;
+    }
+
+    /* responsiveness across devices */
+    @media (max-width: 768px) {
         body {
-            font-family: Arial, sans-serif;
-            color: #000;
-            background: #fff;
-            padding: 20px;
-            padding-top: 220px;
+            padding-top: 130px;
+            padding-left: 10px;
+            padding-right: 10px;
         }
+
         h1 {
-            text-align: center;
-            margin-bottom: 30px;
+            font-size: 1.6rem;
         }
-        fieldset {
-            border: 2px solid #E6BD37;
-            border-radius: 10px;
-            padding: 20px;
-            background: #F9F9F9;
-            max-width: 400px;
-            margin: auto;
-        }
-        legend {
-            font-weight: bold;
-            color: #E6BD37;
-        }
-        label {
-            display: block;
-            margin-top: 15px;
-        }
-        input[type="text"], input[type="password"] {
-            width: 100%;
-            padding: 8px;
-            margin-top: 5px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-        }
-        .error-text {
-            color: red;
-            font-size: 14px;
-            margin-top: 10px;
-            text-align: center;
-        }
-        input[type="submit"] {
-            background: #E6BD37;
-            color: #000;
-            font-weight: bold;
-            margin-top: 20px;
-            padding: 12px;
-            width: 100%;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-        input[type="submit"]:hover {
-            background: #d9aa2f;
-        }
-        .register-link {
-            max-width: 400px;
-            margin: 30px auto 0;
-            padding: 15px;
-            border: 2px solid #E6BD37;
-            border-radius: 10px;
-            background: #F9F9F9;
-            text-align: center;
-        }
-        .register-link p {
-            margin-bottom: 10px;
-        }
+
+        input[type="submit"],
         .register-link button {
-            background: #E6BD37;
-            color: #000;
-            font-weight: bold;
-            padding: 10px 20px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
+            font-size: 0.95rem;
+            padding: 10px;
         }
-        .register-link button:hover {
-            background: #d9aa2f;
+
+        label {
+            font-size: 0.9rem;
         }
-    </style>
+    }
+
+    @media (max-width: 480px) {
+        h1 {
+            font-size: 1.3rem;
+        }
+
+        input[type="text"],
+        input[type="password"] {
+            font-size: 0.95rem;
+            padding: 8px;
+        }
+
+        .register-link button {
+            font-size: 0.9rem;
+            padding: 8px 16px;
+        }
+
+        .register-link {
+            padding: 10px;
+        }
+    }
+</style>
 </head>
 <body>
 
-<h1>Sign In</h1>
-<form method="post">
-    <fieldset>
-        <legend>Login</legend>
-        <label>Username</label>
-        <input type="text" name="username" required>
+<!-- wrapper for sticky footer and layout -->
+<div class="page-wrapper">
 
-        <label>Password</label>
-        <input type="password" name="password" required>
+<main>
+    <h1>Sign In</h1>
+    <form method="post">
+        <fieldset>
+            <legend>Sign In</legend>
+            <label>Username</label>
+            <input type="text" name="username" required>
 
-        <?php if (!empty($error_message)): ?>
-            <div class="error-text"><?php echo htmlspecialchars($error_message); ?></div>
-        <?php endif; ?>
+            <label>Password</label>
+            <input type="password" name="password" required>
 
-        <input type="submit" value="Sign In">
-    </fieldset>
-</form>
+            <?php if (!empty($error_message)): ?>
+                <div class="error-text"><?php echo htmlspecialchars($error_message); ?></div>
+            <?php endif; ?>
 
-<div class="register-link">
-    <p>Don't have an account?</p>
-    <form action="personal_info_reg.php">
-        <button type="submit">Register Now</button>
+            <input type="submit" value="Sign In">
+        </fieldset>
     </form>
-</div>
 
+    <div class="register-link">
+        <p>Don't have an account?</p>
+        <form action="personal_info_reg.php">
+            <button type="submit">Register Now</button>
+        </form>
+    </div>
+</main>
+
+<?php include 'footer.php'; ?>
+
+</div>
 </body>
 </html>

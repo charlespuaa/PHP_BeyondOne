@@ -13,51 +13,115 @@ $contact_number = $_POST['contact_number'] ?? '';
     <meta charset="UTF-8">
     <title>Registration</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            color: #000;
-            background: #fff;
-            padding: 20px;
-            padding-top: 200px;
-        }
-        fieldset {
-            border: 2px solid #E6BD37;
-            border-radius: 10px;
-            padding: 20px;
-            background: #F9F9F9;
-            max-width: 500px;
-            margin: auto;
-        }
-        legend {
-            font-weight: bold;
-            color: #E6BD37;
-        }
-        label {
-            display: block;
-            margin-top: 15px;
-        }
-        input[type="text"] {
-            width: 100%;
-            padding: 8px;
-            margin-top: 5px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-        }
-        input[type="submit"] {
-            background: #E6BD37;
-            color: #000;
-            font-weight: bold;
-            margin-top: 20px;
-            padding: 12px;
-            width: 100%;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-        input[type="submit"]:hover {
-            background: #d9aa2f;
-        }
-    </style>
+    body {
+    font-family: Arial, sans-serif;
+    color: #000;
+    background: #fff;
+    padding: 20px;
+    padding-top: 200px;
+}
+
+h1 {
+    text-align: center;
+    margin-bottom: 30px;
+    font-size: 2rem;
+    color: #E6BD37; /* gold title */
+}
+
+fieldset {
+    border: 2px solid #E6BD37;
+    border-radius: 10px;
+    padding: 20px;
+    background: #fff;
+    max-width: 500px;
+    margin: auto;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+fieldset:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 18px rgba(0,0,0,0.15);
+}
+
+legend {
+    font-weight: bold;
+    color: #E6BD37;
+}
+
+label {
+    display: block;
+    margin-top: 15px;
+}
+
+input[type="text"] {
+    width: 100%;
+    padding: 8px;
+    margin-top: 5px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    background: #F9F9F9;
+    box-sizing: border-box;
+}
+
+input[type="submit"] {
+    background: #E6BD37;
+    color: #fff;
+    font-weight: bold;
+    margin-top: 20px;
+    padding: 12px;
+    width: 100%;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background 0.3s, color 0.3s, border 0.3s;
+}
+
+input[type="submit"]:hover {
+    background: #fff;
+    color: #E6BD37;
+    border: 2px solid #E6BD37;
+}
+
+/* responsiveness across devices */
+@media (max-width: 768px) {
+    body {
+        padding-top: 130px;
+        padding-left: 10px;
+        padding-right: 10px;
+    }
+
+    h1 {
+        font-size: 1.6rem;
+    }
+
+    input[type="submit"] {
+        font-size: 0.95rem;
+        padding: 10px;
+    }
+
+    label {
+        font-size: 0.9rem;
+    }
+}
+
+@media (max-width: 480px) {
+    h1 {
+        font-size: 1.3rem;
+    }
+
+    input[type="text"] {
+        font-size: 0.95rem;
+        padding: 8px;
+    }
+
+    input[type="submit"] {
+        font-size: 0.9rem;
+        padding: 8px 16px;
+    }
+}
+
+</style>
 </head>
 <body>
 
