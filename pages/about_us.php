@@ -9,37 +9,37 @@
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet"/>
 
   <style>
-    .about-container {
-      margin: 0;
-      padding: 0;
-      font-family: 'Poppins', sans-serif;
+    * {
+      box-sizing: border-box;
     }
 
     body {
+      font-family: 'Poppins', sans-serif;
       background: #fff9f9ff;
       color: #333;
       line-height: 1.6;
-      padding-top: 150px; /* Adjusted padding for header */
+      padding-top: 150px;
+      margin: 0;
     }
 
     .about-container {
       max-width: 900px;
       margin: 0 auto;
-      padding: 60px 4px 10px;
+      padding: 60px 20px 10px;
     }
 
-    .hero-image {
+    .about-banner-image {
       width: 100%;
-      height: 400px;
-      background: url('../assets/about-us-hero.jpg') no-repeat center center/cover;
-      border-radius: 8px;
+      height: 450px;
+      object-fit: cover;
+      display: block;
       margin-bottom: 50px;
-      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+      padding:10px;
+      border-radius: 8px;
     }
 
     .section-title {
       font-size: 3em;
-      margin-right: 10px;
       font-weight: bold;
       color: #E6BD37;
       margin-bottom: 20px;
@@ -66,10 +66,6 @@
       margin-bottom: 40px;
     }
 
-    .team-member-info {
-      text-align: left;
-    }
-
     .team-member-name {
       font-size: 1.8em;
       font-weight: bold;
@@ -83,11 +79,12 @@
     }
 
     .team-member-image {
-      width: 100%;
-      height: 250px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
       overflow: hidden;
       border-radius: 2px;
-      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+      height: 250px;
     }
 
     .team-member-image img {
@@ -102,83 +99,111 @@
       filter: brightness(1.2);
     }
 
-    /* Large Desktop (1440px and up) */
+    @media (min-width: 992px) and (max-width: 1199px) {
+      .about-container {
+        padding: 60px 15px 10px;
+      }
+      .about-banner-image {
+        height: 350px;
+        padding:10px
+      }
+      .section-title {
+        font-size: 2.5em;
+        margin-top: -10px;
+      }
+    }
 
-/* Laptop / Split Screen (~1024px) */
-@media (min-width: 992px) and (max-width: 1199px) {
-  .about-container {
-    max-width: 900px;
-  }
-  .team-grid {
-    grid-template-columns: 2fr 3fr;
-  }
-  .section-title {
-    font-size: 2.2em;
-    margin-top: -30px;
-  }
-}
+    @media (min-width: 768px) and (max-width: 991px) {
+      .about-container {
+        max-width: 700px;
+        padding: 40px 15px;
+      }
+      .about-banner-image {
+        height: 300px;
+        margin-bottom: 40px;
+        padding:10px
+      }
+      .section-title {
+        font-size: 2em;
+        margin-top: -10px;
+        text-align: center;
+      }
+      .team-grid {
+        grid-template-columns: 1fr;
+        text-align: center;
+        margin-bottom: 30px;
+      }
+      .team-grid:nth-of-type(even) {
+        grid-template-columns: 1fr;
+      }
+      .team-member-info {
+        text-align: center;
+      }
+      .team-member-image {
+        height: 220px;
+      }
+    }
 
-/* iPad / Tablet (768px - 991px) */
-@media (min-width: 768px) and (max-width: 991px) {
-  .about-container {
-    max-width: 700px;
-    padding: 40px 10px;
-  }
-  .section-title {
-    font-size: 2.2em;
-    margin-top: -30px;
-  }
-  .team-grid {
-    grid-template-columns: 1fr;
-    text-align: center;
-  }
-  .team-member-image {
-    height: 250px;
-  }
-}
+    @media (max-width: 767px) {
+      .about-container {
+        padding: 30px 15px;
+      }
+      .about-banner-image {
+        height: 200px;
+        margin-bottom: 30px;
+        padding:10px
+      }
+      .section-title {
+        font-size: 1.8em;
+        text-align: center;
+        margin-top: -10px;
+      }
+      .team-grid {
+        grid-template-columns: 1fr;
+        text-align: center;
+        margin-bottom: 25px;
+      }
+      .team-member-info {
+        text-align: center;
+      }
+      .team-member-name {
+        font-size: 1.4em;
+      }
+      .team-member-role {
+        font-size: 0.9em;
+      }
+      .team-member-image {
+        height: 180px;
+      }
+    }
 
-/* iPhone 14 Pro Max / Mobile Devices (up to 767px) */
-@media (max-width: 767px) {
-  .about-container {
-    max-width: 100%;
-    padding: 30px 15px;
-  }
-  .section-title {
-    font-size: 1.8em;
-    text-align: center;
-    margin-top: -30px;
-  }
-  .section-content p {
-    font-size: 1em;
-  }
-  .team-grid {
-    grid-template-columns: 1fr;
-    text-align: center;
-  }
-  .team-member-name {
-    font-size: 1.5em;
-  }
-  .team-member-role {
-    font-size: 1em;
-  }
-  .team-member-image {
-    height: 200px;
-  }
-}
-
-    
-
+    @media (max-width: 480px) {
+      .about-container {
+        padding: 20px 10px;
+      }
+      .about-banner-image {
+        height: 160px;
+        margin-bottom: 20px;
+        padding:10px
+      }
+      .section-title {
+        font-size: 1.5em;
+      }
+      .team-member-image {
+        height: 150px;
+      }
+      .team-member-name {
+        font-size: 1.2em;
+      }
+    }
   </style>
 </head>
-<body>
-  <?php include 'header.php'; ?>
-  
 
-  <img 
-    src="../assets/about_etier_banner.png" 
-    alt="Smart Casual Banner" 
-    style="width: 100%; height: 450px; margin: 0; padding: 0;"
-  />
+<body>
+
+  <?php include 'header.php'; ?>
+
+  <img src="../assets/about_etier_banner.png" alt="About Etier Banner" class="about-banner-image"/>
 
   <main class="about-container">
 
@@ -199,7 +224,7 @@
           <div class="team-member-role">Team Leader and Developer</div>
         </div>
         <div class="team-member-image">
-          <img src="../assets/pua_about.jpg" alt="Charles Michael Pua" loading="lazy" />
+          <img src="../assets/pua_about.jpg" alt="Charles Michael Pua" loading="lazy"/>
         </div>
       </div>
 
@@ -209,7 +234,7 @@
           <div class="team-member-role">Developer</div>
         </div>
         <div class="team-member-image">
-          <img src="../assets/alexa_about.PNG" alt="Alexa Joyce Cueto" loading="lazy" />
+          <img src="../assets/alexa_about.PNG" alt="Alexa Joyce Cueto" loading="lazy"/>
         </div>
       </div>
 
@@ -219,7 +244,7 @@
           <div class="team-member-role">Developer</div>
         </div>
         <div class="team-member-image">
-          <img src="../assets/bene_about.PNG" alt="Paul Benedict Collo" loading="lazy" />
+          <img src="../assets/bene_about.PNG" alt="Paul Benedict Collo" loading="lazy"/>
         </div>
       </div>
 
@@ -229,12 +254,15 @@
           <div class="team-member-role">Developer</div>
         </div>
         <div class="team-member-image">
-          <img src="../assets/wei_about.PNG" alt="Wenxuan Wei" loading="lazy" />
+          <img src="../assets/wei_about.PNG" alt="Wenxuan Wei" loading="lazy"/>
         </div>
       </div>
+
     </section>
+
   </main>
 
+  <?php include 'footer.php'; ?>
+
 </body>
-<?php include 'footer.php'; ?>
 </html>

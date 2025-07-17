@@ -47,7 +47,6 @@ while ($row = $result->fetch_assoc()) {
         /* Adjusted for header height */
     }
 
-
     .hero-banners-container {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
@@ -279,7 +278,7 @@ while ($row = $result->fetch_assoc()) {
     }
 
     /* Laptop, iPad / Split Screen (~1024px) */
-    @media (min-width: 792px) and (max-width: 1199px) {
+    @media (min-width: 820px) and (max-width: 1199px) {
         .product-grid {
             grid-template-columns: repeat(3, 1fr);
         }
@@ -345,88 +344,90 @@ while ($row = $result->fetch_assoc()) {
     }
 
     /* Phone */
-@media (min-width: 400px) {
-    .product-grid {
-        grid-template-columns: repeat(2, 1fr); /* changed from 1fr to 2 columns */
-    }
+    @media (min-width: 300px) and (max-width: 800px) {
+        .hero-banners-container {
+            margin-top: 60px;
+        }
 
-    .hero-banners-container {
-        grid-template-columns: 1fr; /* Hero banners still single column on mobile */
-    }
+        .product-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
 
-    .hero-banner {
-        height: 250px;
-    }
+        .hero-banners-container {
+            grid-template-columns: 1fr;
+        }
 
-    .hero-banner-text {
-        font-size: 18px;
-    }
+        .hero-banner {
+            height: 250px;
+        }
 
-    .product-name {
-        font-size: 14px;
-    }
+        .hero-banner-text {
+            font-size: 18px;
+        }
 
-    .product-card {
-        min-height: 280px;
-        padding-bottom: 30px;
-    }
+        .product-name {
+            font-size: 14px;
+        }
 
-    #hatsandcaps .image-container {
-        height: 200px;
-    }
+        .product-card {
+            min-height: 280px;
+            padding-bottom: 30px;
+        }
 
-    #eyewear .image-container {
-        height: 200px;
-    }
+        #hatsandcaps .image-container {
+            height: 200px;
+        }
 
-    #tops .image-container {
-        height: 200px;
-    }
+        #eyewear .image-container {
+            height: 200px;
+        }
 
-    #jackets .image-container {
-        height: 200px;
-    }
+        #tops .image-container {
+            height: 200px;
+        }
 
-    #jackets .product-card {
-        min-height: 320px;
-        padding-bottom: 30px;
-    }
+        #jackets .image-container {
+            height: 200px;
+        }
 
-    #bottoms .product-card {
-        min-height: 320px;
-        padding-bottom: 30px;
-    }
+        #jackets .product-card {
+            min-height: 320px;
+            padding-bottom: 30px;
+        }
 
-   #bottoms .image-container {
-        height: 310px;
-    }
+        #bottoms .product-card {
+            min-height: 320px;
+            padding-bottom: 30px;
+        }
 
-    #accessories .image-container {
-        height: 210px;
-    }
+        #bottoms .image-container {
+            height: 310px;
+        }
 
-    #handbags .image-container {
-        height: 210px;
-    }
+        #accessories .image-container {
+            height: 210px;
+        }
 
-    #shoes .image-container {
-        height: 210px;
-    }
+        #handbags .image-container {
+            height: 210px;
+        }
 
-    #fragrance .image-container {
-        height: 210px;
-    }
+        #shoes .image-container {
+            height: 210px;
+        }
 
-    .product-price {
-        font-size: 15px;
-    }
+        #fragrance .image-container {
+            height: 210px;
+        }
 
-    .product-brand {
-        font-size: 12px;
-    }
-}
+        .product-price {
+            font-size: 15px;
+        }
 
-    
+        .product-brand {
+            font-size: 12px;
+        }
+    }
     </style>
 </head>
 
