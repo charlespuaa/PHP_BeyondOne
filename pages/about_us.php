@@ -43,6 +43,7 @@
       font-weight: bold;
       color: #E6BD37;
       margin-bottom: 20px;
+      margin-top: 10px;
     }
 
     .section-content p {
@@ -101,6 +102,72 @@
       filter: brightness(1.2);
     }
 
+    /* Large Desktop (1440px and up) */
+
+/* Laptop / Split Screen (~1024px) */
+@media (min-width: 992px) and (max-width: 1199px) {
+  .about-container {
+    max-width: 900px;
+  }
+  .team-grid {
+    grid-template-columns: 2fr 3fr;
+  }
+  .section-title {
+    font-size: 2.2em;
+    margin-top: -30px;
+  }
+}
+
+/* iPad / Tablet (768px - 991px) */
+@media (min-width: 768px) and (max-width: 991px) {
+  .about-container {
+    max-width: 700px;
+    padding: 40px 10px;
+  }
+  .section-title {
+    font-size: 2.2em;
+    margin-top: -30px;
+  }
+  .team-grid {
+    grid-template-columns: 1fr;
+    text-align: center;
+  }
+  .team-member-image {
+    height: 250px;
+  }
+}
+
+/* iPhone 14 Pro Max / Mobile Devices (up to 767px) */
+@media (max-width: 767px) {
+  .about-container {
+    max-width: 100%;
+    padding: 30px 15px;
+  }
+  .section-title {
+    font-size: 1.8em;
+    text-align: center;
+    margin-top: -30px;
+  }
+  .section-content p {
+    font-size: 1em;
+  }
+  .team-grid {
+    grid-template-columns: 1fr;
+    text-align: center;
+  }
+  .team-member-name {
+    font-size: 1.5em;
+  }
+  .team-member-role {
+    font-size: 1em;
+  }
+  .team-member-image {
+    height: 200px;
+  }
+}
+
+    
+
   </style>
 </head>
 <body>
@@ -110,7 +177,7 @@
   <img 
     src="../assets/about_etier_banner.png" 
     alt="Smart Casual Banner" 
-    style="width: 100%; display: block; margin: 0; padding: 0;"
+    style="width: 100%; height: 450px; margin: 0; padding: 0;"
   />
 
   <main class="about-container">
