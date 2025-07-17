@@ -44,7 +44,7 @@ $imageToShow = ($view === 'back') ? $product['hover_image'] : $product['image'];
     }
 
     .page-wrapper {
-      padding-top: 190px;
+      padding-top: 190px; /* default top padding for desktop */
       padding-bottom: 90px;
     }
 
@@ -186,6 +186,11 @@ $imageToShow = ($view === 'back') ? $product['hover_image'] : $product['image'];
       .main-image img {
         width: 100%;
         height: auto;
+      }
+
+      /* added responsive fix for header overlapping */
+      .page-wrapper {
+        padding-top: 260px; /* increased top padding for smaller screens */
       }
     }
   </style>

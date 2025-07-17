@@ -30,7 +30,6 @@
       padding: 7px 20px;
       font-size: 13px;
       border-bottom: 1px solid #eee;
-      height: auto;
     }
 
     .etier-header .top-bar-left {
@@ -56,29 +55,45 @@
     }
 
     .etier-header .top-nav {
-      display: flex;
-      justify-content: space-between;
+      display: grid;
+      grid-template-columns: auto 1fr auto;
       align-items: center;
       padding: 10px 20px;
       border-top: 1px solid #eee;
+    }
+
+    .etier-header .menu-toggle {
+      font-size: 24px;
+      cursor: pointer;
+      color: #000;
+      display: none;
+      grid-column: 1;
+      justify-self: start;
+    }
+
+    .etier-header .logo {
+      grid-column: 2;
+      justify-self: center;
+      text-align: center;
     }
 
     .etier-header .logo img {
       width: 80px;
       max-width: 100%;
       object-fit: contain;
+      transition: filter 0.3s ease-in-out;
     }
 
     .etier-header .logo img:hover {
       filter: brightness(1.1);
-      transition: ease-in-out 0.3s;
     }
 
     .etier-header .top-right {
       display: flex;
-      justify-content: flex-end;
       align-items: center;
       gap: 20px;
+      grid-column: 3;
+      justify-self: end;
     }
 
     .etier-header .top-right a {
@@ -98,6 +113,7 @@
       gap: 15px;
       padding: 12px 10px;
       border-top: 1px solid #eee;
+      transition: max-height 0.4s ease, padding 0.4s ease;
     }
 
     .etier-header .main-nav a,
@@ -110,11 +126,11 @@
       padding: 8px;
       letter-spacing: 0.5px;
       transition: all 0.3s ease;
+      white-space: nowrap;
     }
 
     .etier-header .main-nav a:hover {
       color: #749469ff;
-      transition: ease-in-out 0.3s;
     }
 
     .etier-header .main-nav a.active,
@@ -127,25 +143,15 @@
       cursor: default;
     }
 
-  
-    @media (max-width: 768px) {
-      .etier-header .top-bar {
-        flex-direction: column;
-        align-items: center;
-        gap: 8px; 
-        padding: 10px;
+    <?php if ($currentPage === 'signin.php'): ?>
+      .etier-header .top-bar-right a[href="signin.php"] {
+        color: #e6bd37;
+        font-weight: bold;
+        text-decoration: underline;
       }
+    <?php endif; ?>
 
-      .etier-header .top-nav {
-        flex-direction: column;
-        gap: 10px;
-        padding: 10px;
-      }
-
-      .etier-header .top-right {
-        justify-content: center;
-      }
-
+    @media (max-width: 992px) {
       .etier-header .main-nav {
         gap: 10px;
         padding: 10px;
@@ -156,9 +162,59 @@
         font-size: 12px;
         padding: 6px;
       }
+    }
+
+    @media (max-width: 768px) {
+      .etier-header .top-bar {
+        flex-direction: column;
+        gap: 8px;
+        padding: 10px;
+      }
+
+      .etier-header .menu-toggle {
+        display: block;
+      }
 
       .etier-header .logo img {
-        width: 60px;
+        width: 70px;
+      }
+
+      .etier-header .main-nav {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0;
+        padding: 0 20px;
+        position: absolute;
+        top: 100%;
+        left: 0;
+        width: 100%;
+        background: #fff;
+        border-top: 1px solid #eee;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        max-height: 0;
+        overflow: hidden;
+        visibility: hidden;
+        opacity: 0;
+        transition: max-height 0.4s ease, padding 0.4s ease, opacity 0.3s ease, visibility 0.3s ease;
+      }
+
+      .etier-header .main-nav.active {
+        max-height: 400px;
+        padding: 10px 20px;
+        opacity: 1;
+        visibility: visible;
+      }
+
+      .etier-header .main-nav a,
+      .etier-header .main-nav span {
+        width: 100%;
+        padding: 10px 0;
+        border-bottom: 1px solid #eee;
+      }
+
+      .etier-header .main-nav a:last-child,
+      .etier-header .main-nav span:last-child {
+        border-bottom: none;
       }
     }
 
@@ -176,8 +232,8 @@
         font-size: 18px;
       }
 
-      .etier-header .main-nav {
-        gap: 8px;
+      .etier-header .logo img {
+        width: 60px;
       }
     }
   </style>
@@ -191,7 +247,9 @@
   </div>
 
   <div class="top-nav">
-    <div></div>
+    <div class="menu-toggle" id="menuToggle">
+      <i class="fas fa-bars"></i>
+    </div>
     <div class="logo">
       <a href="store.php">
         <img src="../assets/etier_logo_transparent.png" alt="etier logo" />
@@ -202,9 +260,8 @@
     </div>
   </div>
 
-  <!-- nav links shown only if not on about page or sign in -->
   <?php if ($currentPage !== 'about_us.php' && $currentPage !== 'signin.php'): ?>
-    <nav class="main-nav">
+    <nav class="main-nav" id="mainNav">
       <?php
         $categories = [
           'hatsandcaps' => 'hats and caps',
@@ -230,16 +287,6 @@
       ?>
     </nav>
   <?php endif; ?>
-
-  <?php if ($currentPage === 'signin.php'): ?>
-    <style>
-      .etier-header .top-bar-right a[href="signin.php"] {
-        color: #e6bd37;
-        font-weight: bold;
-        text-decoration: underline;
-      }
-    </style>
-  <?php endif; ?>
 </header>
 
 <?php if ($currentPage === 'store.php'): ?>
@@ -251,11 +298,28 @@
     ];
 
     const navLinks = document.querySelectorAll('.main-nav a');
+    const menuToggle = document.getElementById('menuToggle');
+    const mainNav = document.getElementById('mainNav');
+
+    if (menuToggle && mainNav) {
+      menuToggle.addEventListener('click', () => {
+        mainNav.classList.toggle('active');
+        const icon = menuToggle.querySelector('i');
+        icon.classList.toggle('fa-bars');
+        icon.classList.toggle('fa-times');
+      });
+    }
 
     navLinks.forEach(link => {
       link.addEventListener('click', function () {
         navLinks.forEach(l => l.classList.remove('active'));
         this.classList.add('active');
+        if (mainNav && mainNav.classList.contains('active')) {
+          mainNav.classList.remove('active');
+          const icon = menuToggle.querySelector('i');
+          icon.classList.add('fa-bars');
+          icon.classList.remove('fa-times');
+        }
       });
     });
 
@@ -281,7 +345,3 @@
   });
 </script>
 <?php endif; ?>
-<?php
-  $currentPage = basename($_SERVER['PHP_SELF']);
-?>
-
