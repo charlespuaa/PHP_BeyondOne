@@ -30,18 +30,23 @@
       padding: 7px 20px;
       font-size: 13px;
       border-bottom: 1px solid #eee;
+      flex-wrap: nowrap;
+      white-space: nowrap;
+      overflow: hidden;
     }
 
     .etier-header .top-bar-left {
       font-weight: 700;
       font-size: 16px;
       color: #000;
+      flex-shrink: 1;
     }
 
     .etier-header .top-bar-right {
       display: flex;
-      gap: 15px;
+      gap: 12px;
       font-size: 15px;
+      flex-shrink: 1;
     }
 
     .etier-header .top-bar-right a {
@@ -143,6 +148,17 @@
       cursor: default;
     }
 
+    .etier-header .signin-link {
+      border: 2px solid #E6BD37;
+      padding: 2px 6px;
+      border-radius: 5px;
+      background: #fff;
+      transition: background-color 0.3s, color 0.3s, border-color 0.3s;
+      font-weight: 500;
+      display: inline-block;
+      line-height: 1;
+    }
+
     <?php if ($currentPage === 'signin.php'): ?>
       .etier-header .top-bar-right a[href="signin.php"] {
         color: #e6bd37;
@@ -151,24 +167,27 @@
       }
     <?php endif; ?>
 
-    @media (max-width: 992px) {
-      .etier-header .main-nav {
-        gap: 10px;
-        padding: 10px;
-      }
-
-      .etier-header .main-nav a,
-      .etier-header .main-nav span {
-        font-size: 12px;
-        padding: 6px;
-      }
-    }
-
     @media (max-width: 768px) {
       .etier-header .top-bar {
-        flex-direction: column;
-        gap: 8px;
-        padding: 10px;
+        flex-wrap: nowrap;
+        padding: 7px 12px;
+        gap: 10px;
+        font-size: 12px;
+      }
+
+      .etier-header .top-bar-left {
+        font-size: 14px;
+        flex-shrink: 0;
+      }
+
+      .etier-header .top-bar-right {
+        flex-direction: row;
+        gap: 10px;
+        flex-shrink: 0;
+      }
+
+      .etier-header .top-bar-right a {
+        font-size: 13px;
       }
 
       .etier-header .menu-toggle {
@@ -219,21 +238,28 @@
     }
 
     @media (max-width: 480px) {
-      .etier-header .top-bar-right {
-        flex-direction: column;
-        gap: 5px;
+      .etier-header .top-bar {
+        font-size: 11px;
       }
 
       .etier-header .top-bar-left {
-        font-size: 14px;
+        font-size: 13px;
       }
 
-      .etier-header .top-right a {
-        font-size: 18px;
+      .etier-header .top-bar-right {
+        gap: 8px;
+      }
+
+      .etier-header .top-bar-right a {
+        font-size: 12px;
       }
 
       .etier-header .logo img {
         width: 60px;
+      }
+
+      .etier-header .top-right a {
+        font-size: 18px;
       }
     }
   </style>
@@ -241,8 +267,9 @@
   <div class="top-bar">
     <div class="top-bar-left">ETIER</div>
     <div class="top-bar-right">
-      <a href="about_us.php">ABOUT US</a>
-      <a href="signin.php">SIGN IN</a>
+      <a href="about_us.php">ABOUT US &nbsp;</a>
+      <a href="signin.php" class="signin-link">SIGN IN</a>
+      </div>          
     </div>
   </div>
 
