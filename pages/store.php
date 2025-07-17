@@ -347,7 +347,7 @@ while ($row = $result->fetch_assoc()) {
     /* iPhone 14 Pro Max / Mobile Devices (up to 767px) */
     @media (max-width: 767px) {
         .product-grid {
-            grid-template-columns: 1fr;
+            grid-template-columns: repeat(2, 1fr);
         }
 
         .hero-banners-container {
@@ -366,12 +366,16 @@ while ($row = $result->fetch_assoc()) {
             font-size: 14px;
         }
 
+        #tops .product-card {
+            height: 150px;
+        }
+
         #tops .image-container {
             height: 400px;
         }
 
         #jackets .product-card {
-            min-height: 550px;
+            height: 250px;
             padding-bottom: 60px;
         }
 
