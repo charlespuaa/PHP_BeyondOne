@@ -101,6 +101,7 @@ while ($row = $result->fetch_assoc()) {
     .category-section {
         margin-bottom: 40px;
         scroll-margin-top: 140px;
+        padding: 0 20px;
     }
 
     .category-section:first-of-type {
@@ -108,7 +109,7 @@ while ($row = $result->fetch_assoc()) {
     }
 
     h2.category-title {
-        font-size: 24px;
+        font-size: 28px;
         text-transform: uppercase;
         border-bottom: 2px solid #E6BD37;
         padding-bottom: 10px;
@@ -210,7 +211,8 @@ while ($row = $result->fetch_assoc()) {
         z-index: 10;
     }
 
-    #jackets .product-card {
+    #jackets .product-card,
+    #bottoms .product-card {
         min-height: 550px;
         padding-bottom: 60px;
     }
@@ -219,13 +221,12 @@ while ($row = $result->fetch_assoc()) {
         height: 350px;
     }
 
-    #bottoms .product-card {
-        min-height: 550px;
-        padding-bottom: 60px;
+    #bottoms .image-container {
+        height: 570px;
     }
 
-    #bottoms .image-container {
-        height: 500px;
+    #tops .image-container {
+        height: 350px;
     }
 
     .product-card:hover .quickshop-container {
@@ -274,13 +275,49 @@ while ($row = $result->fetch_assoc()) {
 
         .hero-banners-container {
             grid-template-columns: repeat(3, 1fr);
+            max-width: 1100px;
         }
     }
 
-    /* Laptop, iPad / Split Screen (~1024px) */
-    @media (min-width: 820px) and (max-width: 1199px) {
+    /*iPad / Split Screen (~1024px) */
+    @media (min-width: 708px) and (max-width: 1199px) {
+        .store-container {
+            margin-top: 100px;
+            padding: 15px;
+        }
+
+        .hero-banners-container {
+            margin-top: 40px;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            padding: 0 15px;
+            grap: 15px;
+        }
+
+        .hero-banner {
+            height: 300px;
+        }
+
+        .hero-banner-text {
+            font-size: 24px;
+        }
+
+        .category-section {
+            margin-bottom: 40px;
+            padding: 0 15px;
+        }
+
         .product-grid {
             grid-template-columns: repeat(3, 1fr);
+        }
+
+        .product-card {
+            min-height: 400px;
+            /* Default product card height for iPad */
+            padding-bottom: 40px;
+        }
+
+        .image-container {
+            height: 250px;
         }
 
         .hero-banners-container {
@@ -299,52 +336,22 @@ while ($row = $result->fetch_assoc()) {
             padding: 20px;
         }
 
-        #hatsandcaps .image-container {
-            height: 500px;
-        }
-
-        #tops .image-container {
-            height: 500px;
-        }
-
-        #jackets .product-card {
-            min-height: 550px;
-            padding-bottom: 60px;
-        }
-
-        #jackets .image-container {
-            height: 500px;
-        }
-
+        /* iPad specific overrides for categories */
+        #jackets .product-card,
         #bottoms .product-card {
-            min-height: 550px;
-            padding-bottom: 60px;
+            min-height: 480px; 
         }
-
+        #jackets .image-container,
         #bottoms .image-container {
-            height: 450px;
+            height: 300px; 
         }
-
-        #accessories .product-card {
-            min-height: 650px;
-            padding-bottom: 60px;
-        }
-
-        #accessories .image-container {
-            height: 450px;
-        }
-
-        #handbags .image-container {
-            height: 450px;
-        }
-
-        #fragrance .image-container {
-            height: 450px;
+        #bottoms .image-container { 
+            height: 500px;
         }
     }
 
     /* Phone */
-    @media (min-width: 300px) and (max-width: 800px) {
+    @media (min-width: 300px) and (max-width: 690px) {
         .hero-banners-container {
             margin-top: 60px;
         }
