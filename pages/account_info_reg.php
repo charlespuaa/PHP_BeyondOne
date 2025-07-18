@@ -57,7 +57,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['register'])) {
                 // Send email
                 $to = $email;
                 $subject = "Welcome to Etier!";
-                $body = "<html><body><h3>Hello $first_name!</h3><p>This is to inform you that you created an account in Etier...</p></body></html>";
+                $body = "<html><body><h3>Hello $first_name!</h3><p>This is to inform you that you created an account in Etier. You can now log in to our website and enjoy shopping to your heart's content!</p></body></html>";
                 $headers = "MIME-Version: 1.0\r\n";
                 $headers .= "Content-type:text/html;charset=UTF-8\r\n";
                 $headers .= "From: Etier <no-reply@yourdomain.com>\r\n";
