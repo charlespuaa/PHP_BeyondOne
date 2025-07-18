@@ -1,7 +1,40 @@
 <?php
-session_start(); // Start the session at the very beginning of product.php
+session_start(); 
 include '../db.php';
 
+// Handle form submission here — store to session cart
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'add_to_cart') {
+    $productId = intval($_POST['product_id']);
+    $quantity = intval($_POST['quantity'] ?? 1);
+    $size = $_POST['size'] ?? '';
+
+    if ($size === '') {
+        $_SESSION['message'] = "Size is required.";
+        $_SESSION['message_type'] = "error";
+    } else {
+        // Initialize cart if not already
+        if (!isset($_SESSION['cart'])) {
+            $_SESSION['cart'] = [];
+        }
+
+        $itemKey = $productId . '_' . $size;
+
+        if (isset($_SESSION['cart'][$itemKey])) {
+            $_SESSION['cart'][$itemKey]['quantity'] += $quantity;
+        } else {
+            $_SESSION['cart'][$itemKey] = [
+                'product_id' => $productId,
+                'size' => $size,
+                'quantity' => $quantity
+            ];
+        }
+
+        $_SESSION['message'] = "Added to bag!";
+        $_SESSION['message_type'] = "success";
+    }
+}
+
+// Continue with displaying product as usual
 if (!isset($_GET['id'])) {
   die('Product ID missing.');
 }
@@ -21,6 +54,10 @@ $product = $result->fetch_assoc();
 $activeCategory = strtolower(str_replace(' ', '', $product['category']));
 $imageToShow = ($view === 'back') ? $product['hover_image'] : $product['image'];
 ?>
+
+<!-- Your original HTML continues here exactly as you had it... -->
+<!-- (Your full HTML code from earlier remains unchanged) -->
+
 
 <!DOCTYPE html>
 <html lang="en">
@@ -212,12 +249,14 @@ $imageToShow = ($view === 'back') ? $product['hover_image'] : $product['image'];
       }
 
       .main-image img {
-        width: 100%;
+        justify-content: center;
+        margin-left: 60px;
+        width: 65%;
         height: auto;
       }
 
       .page-wrapper {
-        padding-top: 260px;
+        padding-top: 100px;
       }
     }
   </style>
@@ -302,11 +341,27 @@ $imageToShow = ($view === 'back') ? $product['hover_image'] : $product['image'];
         });
       });
 
+      // message saying "Successfully added to bag" when item is added
+      addToBagBtn.addEventListener('click', function() {
+        if (selectedSizeInput.value !== '') {
+          // Show success message
+          const messageDiv = document.createElement('div');
+          messageDiv.className = 'product-message success';
+          messageDiv.textContent = 'Successfully added to bag.';
+          document.querySelector('.product-details').appendChild(messageDiv);
+          
+          // Optionally, you can clear the message after a few seconds
+          setTimeout(() => {
+            messageDiv.remove();
+          }, 3000);
+        }
+      });
+
       // Prevent form submission if no size is selected
       addToBagBtn.addEventListener('click', function(event) {
         if (selectedSizeInput.value === '') {
           event.preventDefault(); // Stop form submission
-          alert('Please select a size before adding to bag.');
+          alert('Select a size before adding to bag.');
         }
       });
     });

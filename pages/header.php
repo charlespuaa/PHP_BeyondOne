@@ -6,9 +6,7 @@
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
 
   <style>
-    /* ------------------------------------------- */
-    /* Existing Header Styles (Keep them as is)    */
-    /* ------------------------------------------- */
+  
     .etier-header *, .etier-header *::before, .etier-header *::after {
       box-sizing: border-box;
       margin: 0;
@@ -30,7 +28,7 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 7px 20px;
+      padding: 8px 20px;
       font-size: 13px;
       background: #000;
       border-bottom: 1px solid #333;
@@ -45,6 +43,7 @@
       color: #FFF;
       flex-shrink: 1;
       z-index: 10;
+      padding-left: 10px;
     }
 
     .etier-header .top-bar-left a {
@@ -92,6 +91,7 @@
       font-size: 15px;
       flex-shrink: 1;
       z-index: 10;
+      padding-right: 10px;
     }
 
     .etier-header .top-bar-right a {
@@ -110,14 +110,15 @@
       align-items: center;
       padding: 10px 20px;
       border-top: 1px solid #eee;
-      transition: max-height 0.4s ease, padding 0.4s ease;
+      /* Removed this line as it seemed misplaced and could affect layout */
+      /* transition: max-height 0.4s ease, padding 0.4s ease; */
     }
 
     .etier-header .menu-toggle {
       font-size: 24px;
       cursor: pointer;
       color: #000;
-      display: none;
+      display: none; /* Hidden by default on desktop, shown by media query */
       grid-column: 1;
       justify-self: start;
     }
@@ -151,6 +152,7 @@
       font-size: 22px;
       color: #000;
       text-decoration: none;
+      padding-right: 10px;
     }
 
     .etier-header .top-right a:hover {
@@ -202,9 +204,7 @@
       }
     <?php endif; ?>
 
-    /* ------------------------------------------- */
-    /* Media Queries for Responsiveness            */
-    /* ------------------------------------------- */
+    /* responsive styles */
     @media (max-width: 768px) {
       .etier-header .top-bar {
         padding: 7px 10px;
@@ -235,8 +235,9 @@
           max-height: 100%;
       }
 
+      /* This rule will only apply if menu-toggle is present in HTML */
       .etier-header .menu-toggle {
-        display: block;
+        display: block; /* Shown on mobile */
       }
 
       .etier-header .logo img {
@@ -333,9 +334,18 @@
   </div>
 
   <div class="top-nav">
-    <div class="menu-toggle" id="menuToggle">
-      <i class="fas fa-bars"></i>
-    </div>
+    <?php
+    // Define pages where menu-toggle and main-nav should NOT appear
+    $noNavPages = ['about_us.php', 'signin.php', 'account_info_reg.php', 'personal_info_reg.php', 'address_info_reg.php', 'payment.php'];
+    $showNavAndHamburger = !in_array($currentPage, $noNavPages);
+    ?>
+
+    <?php if ($showNavAndHamburger): // Only show menu toggle if navigation is needed ?>
+      <div class="menu-toggle" id="menuToggle">
+        <i class="fas fa-bars"></i>
+      </div>
+    <?php endif; ?>
+
     <div class="logo">
       <a href="store.php">
         <img src="../assets/etier_logo_transparent.png" alt="etier logo" />
@@ -345,7 +355,7 @@
       <a href="cart.php"><i class="fas fa-shopping-bag"></i></a> </div>
   </div>
 
-  <?php if (!in_array($currentPage, ['about_us.php', 'signin.php', 'account_info_reg.php', 'personal_info_reg.php', 'address_info_reg.php'])): ?>
+  <?php if ($showNavAndHamburger): // Only show main navigation if needed ?>
     <nav class="main-nav" id="mainNav">
       <?php
         $categories = [
@@ -386,6 +396,7 @@
     const menuToggle = document.getElementById('menuToggle');
     const mainNav = document.getElementById('mainNav');
 
+    // Only add event listener if menuToggle and mainNav exist (i.e., not on pages where they are removed by PHP)
     if (menuToggle && mainNav) {
       menuToggle.addEventListener('click', () => {
         mainNav.classList.toggle('active');
@@ -444,7 +455,7 @@
     }
 
     // Start rotation
-    setInterval(showNextText, 4000);
+    setInterval(showNextText, 2000);
   });
 </script>
 <?php endif; ?>
