@@ -188,7 +188,7 @@ include 'header.php';
 
 <p style="text-align:center; margin-top: 20px;">
     Already have an account?
-    <a href="signin.php" style="color: #E6BD37; text-decoration: underline;">Go back to sign in</a>
+    <a href="signin.php" style="color: #E6BD37; text-decoration: underline;">Sign in</a>
 </p>
 
 </body>
