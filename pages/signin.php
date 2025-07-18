@@ -2,7 +2,7 @@
 session_start();
 
 $host = 'localhost';
-$db   = 'etierreg';
+$db   = 'etierproducts'; // Your registration database
 $user = 'root';
 $pass = '';
 
@@ -13,24 +13,26 @@ $error_message = "";
 
 if (isset($_COOKIE['login_error'])) {
     $error_message = $_COOKIE['login_error'];
-    setcookie('login_error', '', time() - 3600, "/"); 
+    setcookie('login_error', '', time() - 3600, "/"); // Clear the cookie
 }
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $username = trim($_POST['username']);
     $password = $_POST['password'];
 
-    $stmt = $conn->prepare("SELECT password FROM users WHERE username = ?");
+    // Select both password and user ID
+    $stmt = $conn->prepare("SELECT id, password FROM users WHERE username = ?");
     if ($stmt) {
         $stmt->bind_param("s", $username);
         $stmt->execute();
         $stmt->store_result();
 
         if ($stmt->num_rows == 1) {
-            $stmt->bind_result($hashed_password);
+            $stmt->bind_result($user_id, $hashed_password); // Bind user_id
             $stmt->fetch();
             if (password_verify($password, $hashed_password)) {
-                $_SESSION['username'] = $username;
+                $_SESSION['user_id'] = $user_id;       // Store user ID in session
+                $_SESSION['username'] = $username;     // Store username in session
                 header("Location: store.php");
                 exit;
             } else {
@@ -51,6 +53,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     }
 }
 
+// Ensure header.php includes session_start() at its very top as well.
+// If not, it should be added there for consistency.
 include 'header.php';
 ?>
 
@@ -59,7 +63,7 @@ include 'header.php';
 <head>
     <meta charset="UTF-8">
     <title>Sign In - Etier</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"> <!-- added viewport for mobile scaling -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
     /* sticky footer base layout */
     html, body {
@@ -91,7 +95,7 @@ include 'header.php';
         text-align: center;
         margin-bottom: 30px;
         font-size: 2rem;
-        color: #E6BD37;
+        color: #000000ff;
     }
 
     fieldset {
@@ -250,7 +254,6 @@ include 'header.php';
 </head>
 <body>
 
-<!-- wrapper for sticky footer and layout -->
 <div class="page-wrapper">
 
 <main>

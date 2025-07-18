@@ -1,4 +1,5 @@
 <?php
+session_start(); // Start the session at the very beginning of product.php
 include '../db.php';
 
 if (!isset($_GET['id'])) {
@@ -130,8 +131,15 @@ $imageToShow = ($view === 'back') ? $product['hover_image'] : $product['image'];
       transition: all 0.3s ease;
     }
 
-    .sizes button:hover,
-    .colors button:hover {
+    /* Added styling for selected size */
+    .sizes button.selected {
+        border-color: black;
+        background-color: black;
+        color: white;
+    }
+
+    .sizes button:hover:not(.selected),
+    .colors button:hover:not(.selected) {
       border-color: #000000;
       background-color: #000000;
       color: white;
@@ -168,6 +176,26 @@ $imageToShow = ($view === 'back') ? $product['hover_image'] : $product['image'];
       color: white;
     }
 
+    /* Message styling */
+    .product-message {
+        margin-top: 15px;
+        padding: 10px;
+        border-radius: 5px;
+        font-weight: bold;
+        text-align: center;
+    }
+    .product-message.success {
+        background-color: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+    }
+    .product-message.error {
+        background-color: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+    }
+
+
     @media (max-width: 768px) {
       .product-page {
         flex-direction: column;
@@ -188,9 +216,8 @@ $imageToShow = ($view === 'back') ? $product['hover_image'] : $product['image'];
         height: auto;
       }
 
-      /* added responsive fix for header overlapping */
       .page-wrapper {
-        padding-top: 260px; /* increased top padding for smaller screens */
+        padding-top: 260px;
       }
     }
   </style>
@@ -199,9 +226,7 @@ $imageToShow = ($view === 'back') ? $product['hover_image'] : $product['image'];
   <div class="page-content">
     <div class="page-wrapper">
       <div class="product-page">
-        <!-- image gallery -->
         <div class="gallery-section">
-          <!-- thumbnails -->
           <div class="thumbnails">
             <a href="?id=<?= $id ?>&view=front" class="<?= ($view === 'front') ? 'active' : '' ?>">
               <img src="../assets/<?= $product['image'] ?>" alt="Front">
@@ -211,13 +236,11 @@ $imageToShow = ($view === 'back') ? $product['hover_image'] : $product['image'];
             </a>
           </div>
 
-          <!-- main image -->
           <div class="main-image">
             <img src="../assets/<?= $imageToShow ?>" alt="<?= htmlspecialchars($product['name']) ?>">
           </div>
         </div>
 
-        <!-- product info -->
         <div class="product-details">
           <div class="product-name"><?= htmlspecialchars($product['name']) ?></div>
           <div class="product-brand">Etier</div>
@@ -230,22 +253,63 @@ $imageToShow = ($view === 'back') ? $product['hover_image'] : $product['image'];
             </p>
           </div>
 
-          <div class="sizes">
-            <strong>Size:</strong><br>
-            <?php foreach (['XS', 'S', 'M', 'L', 'XL'] as $size): ?>
-              <button><?= $size ?></button>
-            <?php endforeach; ?>
-          </div>
+          <form id="addToCartForm" action="cart.php" method="POST">
+            <input type="hidden" name="action" value="add_to_cart">
+            <input type="hidden" name="product_id" value="<?= $product['id'] ?>">
+            <input type="hidden" name="quantity" value="1"> <input type="hidden" name="size" id="selectedSize" value=""> <div class="sizes">
+              <strong>Size:</strong><br>
+              <?php foreach (['XS', 'S', 'M', 'L', 'XL'] as $size): ?>
+                <button type="button" class="size-btn" data-size="<?= $size ?>"><?= $size ?></button>
+              <?php endforeach; ?>
+            </div>
 
-          <div class="actions">
-            <button>Add to Bag</button>
-            <button class="buy-now">Buy Now</button>
-          </div>
+            <div class="actions">
+              <button type="submit" id="addToBagBtn">Add to Bag</button>
+              <button type="button" class="buy-now">Buy Now</button> </div>
+          </form>
+
+          <?php if (isset($_SESSION['message'])): ?>
+            <div class="product-message <?= $_SESSION['message_type'] ?>">
+                <?= $_SESSION['message'] ?>
+            </div>
+            <?php
+            unset($_SESSION['message']); // Clear the message after displaying
+            unset($_SESSION['message_type']);
+            ?>
+          <?php endif; ?>
+
         </div>
       </div>
     </div>
   </div>
 
   <?php include 'footer.php'; ?>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", function() {
+      const sizeButtons = document.querySelectorAll('.size-btn');
+      const selectedSizeInput = document.getElementById('selectedSize');
+      const addToBagBtn = document.getElementById('addToBagBtn');
+
+      sizeButtons.forEach(button => {
+        button.addEventListener('click', function() {
+          // Remove 'selected' class from all buttons
+          sizeButtons.forEach(btn => btn.classList.remove('selected'));
+          // Add 'selected' class to the clicked button
+          this.classList.add('selected');
+          // Set the value of the hidden input
+          selectedSizeInput.value = this.dataset.size;
+        });
+      });
+
+      // Prevent form submission if no size is selected
+      addToBagBtn.addEventListener('click', function(event) {
+        if (selectedSizeInput.value === '') {
+          event.preventDefault(); // Stop form submission
+          alert('Please select a size before adding to bag.');
+        }
+      });
+    });
+  </script>
 </body>
 </html>

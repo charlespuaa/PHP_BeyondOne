@@ -1,6 +1,6 @@
 <?php
 $host = 'localhost';
-$db   = 'etierreg';
+$db   = 'etierproducts';
 $user = 'root';
 $pass = '';
 

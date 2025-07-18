@@ -6,6 +6,9 @@
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
 
   <style>
+    /* ------------------------------------------- */
+    /* Existing Header Styles (Keep them as is)    */
+    /* ------------------------------------------- */
     .etier-header *, .etier-header *::before, .etier-header *::after {
       box-sizing: border-box;
       margin: 0;
@@ -29,17 +32,58 @@
       align-items: center;
       padding: 7px 20px;
       font-size: 13px;
-      border-bottom: 1px solid #eee;
+      background: #000;
+      border-bottom: 1px solid #333;
       flex-wrap: nowrap;
-      white-space: nowrap;
       overflow: hidden;
+      position: relative;
     }
 
     .etier-header .top-bar-left {
       font-weight: 700;
       font-size: 16px;
-      color: #000;
+      color: #FFF;
       flex-shrink: 1;
+      z-index: 10;
+    }
+
+    .etier-header .top-bar-left a {
+      color: #FFF;
+      text-decoration: none;
+      font-weight: bold;
+    }
+
+    .etier-header .rotating-text-container {
+        position: absolute;
+        left: 0;
+        right: 0;
+        text-align: center;
+        overflow: hidden;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        pointer-events: none;
+        z-index: 5;
+    }
+
+    .etier-header .rotating-text-item {
+        color: #FFF;
+        font-size: 14px;
+        font-weight: 500;
+        opacity: 0;
+        position: absolute;
+        transition: opacity 0.5s ease-in-out;
+        white-space: nowrap;
+        letter-spacing: 1px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+    }
+
+    .etier-header .rotating-text-item.active {
+        opacity: 1;
     }
 
     .etier-header .top-bar-right {
@@ -47,12 +91,13 @@
       gap: 12px;
       font-size: 15px;
       flex-shrink: 1;
+      z-index: 10;
     }
 
     .etier-header .top-bar-right a {
-      color: #000;
+      color: #FFF;
+      font-weight: 600;
       text-decoration: none;
-      font-weight: 500;
     }
 
     .etier-header .top-bar-right a:hover {
@@ -65,6 +110,7 @@
       align-items: center;
       padding: 10px 20px;
       border-top: 1px solid #eee;
+      transition: max-height 0.4s ease, padding 0.4s ease;
     }
 
     .etier-header .menu-toggle {
@@ -147,18 +193,7 @@
     .etier-header .main-nav span {
       cursor: default;
     }
-
-    .etier-header .signin-link {
-      border: 2px solid #E6BD37;
-      padding: 2px 6px;
-      border-radius: 5px;
-      background: #fff;
-      transition: background-color 0.3s, color 0.3s, border-color 0.3s;
-      font-weight: 500;
-      display: inline-block;
-      line-height: 1;
-    }
-
+      
     <?php if ($currentPage === 'signin.php'): ?>
       .etier-header .top-bar-right a[href="signin.php"] {
         color: #e6bd37;
@@ -167,12 +202,13 @@
       }
     <?php endif; ?>
 
+    /* ------------------------------------------- */
+    /* Media Queries for Responsiveness            */
+    /* ------------------------------------------- */
     @media (max-width: 768px) {
       .etier-header .top-bar {
-        flex-wrap: nowrap;
-        padding: 7px 12px;
-        gap: 10px;
-        font-size: 12px;
+        padding: 7px 10px;
+        gap: 8px;
       }
 
       .etier-header .top-bar-left {
@@ -181,13 +217,22 @@
       }
 
       .etier-header .top-bar-right {
-        flex-direction: row;
-        gap: 10px;
+        gap: 8px;
+        font-size: 14px;
         flex-shrink: 0;
       }
-
       .etier-header .top-bar-right a {
-        font-size: 13px;
+          font-size: 12px;
+      }
+
+      .etier-header .rotating-text-item {
+          font-size: 11px;
+          letter-spacing: 0.3px;
+          white-space: normal;
+          line-height: 1.3;
+          text-overflow: ellipsis;
+          overflow: hidden;
+          max-height: 100%;
       }
 
       .etier-header .menu-toggle {
@@ -239,19 +284,24 @@
 
     @media (max-width: 480px) {
       .etier-header .top-bar {
-        font-size: 11px;
+        padding: 5px 8px;
+        gap: 5px;
       }
 
       .etier-header .top-bar-left {
-        font-size: 13px;
+        font-size: 12px;
       }
 
       .etier-header .top-bar-right {
-        gap: 8px;
+        gap: 5px;
+      }
+      .etier-header .top-bar-right a {
+          font-size: 10px;
       }
 
-      .etier-header .top-bar-right a {
-        font-size: 12px;
+      .etier-header .rotating-text-item {
+          font-size: 9px;
+          letter-spacing: 0.1px;
       }
 
       .etier-header .logo img {
@@ -265,11 +315,20 @@
   </style>
 
   <div class="top-bar">
-    <div class="top-bar-left">ETIER</div>
+    <div class="top-bar-left">
+        <a href="store.php">ETIER</a>
+    </div>
+
+    <div class="rotating-text-container" id="rotatingTextContainer">
+      <div class="rotating-text-item">FREE SHIPPING FOR ETIER MEMBERS</div>
+      <div class="rotating-text-item">GET 10% OFF YOUR FIRST ORDER</div>
+      <div class="rotating-text-item">LUXURY YOU CAN AFFORD</div>
+      <div class="rotating-text-item">NEW ARRIVALS EVERY FRIDAY</div>
+    </div>
+
     <div class="top-bar-right">
-      <a href="about_us.php">ABOUT US &nbsp;</a>
-      <a href="signin.php" class="signin-link">SIGN IN</a>
-      </div>          
+      <a href="about_us.php">ABOUT US</a>
+      <a href="signin.php">SIGN IN</a>
     </div>
   </div>
 
@@ -283,8 +342,7 @@
       </a>
     </div>
     <div class="top-right">
-      <a href="#"><i class="fas fa-shopping-bag"></i></a>
-    </div>
+      <a href="cart.php"><i class="fas fa-shopping-bag"></i></a> </div>
   </div>
 
   <?php if ($currentPage !== 'about_us.php' && $currentPage !== 'signin.php'): ?>
@@ -369,6 +427,24 @@
         }
       });
     });
+
+    // New: JavaScript for Rotating Text
+    const rotatingTextItems = document.querySelectorAll('.rotating-text-item');
+    let currentTextIndex = 0;
+
+    function showNextText() {
+        rotatingTextItems[currentTextIndex].classList.remove('active');
+        currentTextIndex = (currentTextIndex + 1) % rotatingTextItems.length;
+        rotatingTextItems[currentTextIndex].classList.add('active');
+    }
+
+    // Initialize: show the first text
+    if (rotatingTextItems.length > 0) {
+        rotatingTextItems[0].classList.add('active');
+    }
+
+    // Start rotation
+    setInterval(showNextText, 4000);
   });
 </script>
 <?php endif; ?>
