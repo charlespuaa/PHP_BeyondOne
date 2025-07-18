@@ -96,7 +96,6 @@ include 'header.php';
     text-align: center;
     margin-bottom: 30px;
     font-size: 2rem;
-    color: #E6BD37; 
     }
 
     body {

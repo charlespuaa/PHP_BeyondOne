@@ -95,7 +95,7 @@ include 'header.php';
         text-align: center;
         margin-bottom: 30px;
         font-size: 2rem;
-        color: #000000ff;
+        color: #E6BD37;
     }
 
     fieldset {
