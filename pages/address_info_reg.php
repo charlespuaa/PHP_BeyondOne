@@ -24,96 +24,101 @@ $region = $_POST['region'] ?? '';
     <title>Registration</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            color: #000;
-            background: #fff;
-            padding: 20px;
-            padding-top: 170px;
-        }
+    body {
+        font-family: Arial, sans-serif;
+        color: #000;
+        background: #fff;
+        padding: 20px;
+        padding-top: 170px;
+    }
 
-        h1 {
-            text-align: center;
-            margin-bottom: 30px;
-            font-size: 2rem;
-        }
+    h1 {
+        text-align: center;
+        margin-bottom: 30px;
+        font-size: 2rem;
+    }
 
-        fieldset {
-            border: 2px solid #E6BD37;
-            border-radius: 10px;
-            padding: 20px;
-            background: #F9F9F9;
-            max-width: 500px;
-            margin: auto;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-        }
+    fieldset {
+        border: 2px solid #E6BD37;
+        border-radius: 10px;
+        padding: 20px;
+        background: #fff; /* container background changed to white */
+        max-width: 500px;
+        margin: auto;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
 
-        legend {
-            font-weight: bold;
-            color: #E6BD37;
-        }
+    legend {
+        font-weight: bold;
+        color: #E6BD37;
+    }
 
-        label {
-            display: block;
-            margin-top: 15px;
-        }
+    label {
+        display: block;
+        margin-top: 15px;
+    }
 
-        input[type="text"] {
-            width: 100%;
-            padding: 8px;
-            margin-top: 5px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-        }
+    input[type="text"] {
+        width: 100%;
+        padding: 8px;
+        margin-top: 5px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        background: #f9f9f9; /* input fields changed to off-white */
+    }
 
-        input[type="submit"] {
-            background: #E6BD37;
-            color: #fff;
-            font-weight: bold;
-            margin-top: 20px;
-            padding: 12px;
-            width: 100%;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-        }
+    input[type="submit"] {
+        background: #E6BD37;
+        color: #fff;
+        font-weight: bold;
+        margin-top: 20px;
+        padding: 12px;
+        width: 100%;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+    }
 
-        input[type="submit"]:hover {
-            background: #fff;
-            color: #E6BD37;
-            border: 2px solid #E6BD37;
-        }
-        /* responsiveness across devices */
-        @media (max-width: 768px) {
-            body { 
+    input[type="submit"]:hover {
+        background: #fff;
+        color: #E6BD37;
+        border: 2px solid #E6BD37;
+    }
+
+    /* responsiveness across devices */
+    @media (max-width: 768px) {
+        body { 
             padding-top: 130px; 
             padding-left: 10px; 
             padding-right: 10px; 
         }
-            h1 { 
+
+        h1 { 
             font-size: 1.6rem; 
         }
-            input[type="submit"] { 
+
+        input[type="submit"] { 
             font-size: 0.95rem; 
             padding: 10px; 
         }
-            label { 
+
+        label { 
             font-size: 0.9rem; 
         }
+    }
 
-        }
-
-        @media (max-width: 480px) {
-            h1 { 
+    @media (max-width: 480px) {
+        h1 { 
             font-size: 1.3rem; 
         }
-            input[type="text"] { 
+
+        input[type="text"] { 
             font-size: 0.95rem; 
             padding: 8px; 
         }
+    }
+</style>
 
-        }
-    </style>
 </head>
 <body>
 
@@ -157,5 +162,6 @@ $region = $_POST['region'] ?? '';
         <input type="submit" value="Next">
     </fieldset>
 </form>
+<?php include 'footer.php'; ?>
 </body>
 </html>

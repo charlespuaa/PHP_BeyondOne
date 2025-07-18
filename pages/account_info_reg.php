@@ -3,7 +3,7 @@ $host = 'localhost';
 $db   = 'etierproducts';
 $user = 'root';
 $pass = '';
-
+ 
 $conn = new mysqli($host, $user, $pass, $db);
 if ($conn->connect_error) die("Connection failed: " . $conn->connect_error);
 
@@ -55,14 +55,56 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['register'])) {
             );
             if ($stmt->execute()) {
                 $to = $email;
-                $subject = "Welcome to Etier!";
-                $body = "<html><body><h3>Hello $first_name!</h3><p>This is to inform you that you created an account in Etier. You can now log in to our website and enjoy shopping to your heart's content!</p></body></html>";
+                $subject = "Welcome to ETIER – Your Account Has Been Successfully Created!";
+
+                $body = "
+                <html>
+                <head>
+                  <style>
+                    body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+                    .header { background-color: #E6BD37; padding: 20px; text-align: center; color: white; }
+                    .content { padding: 20px; }
+                    .footer { font-size: 0.9em; color: #777; text-align: center; padding: 20px; border-top: 1px solid #ddd; margin-top: 30px; }
+                  </style>
+                </head>
+                <body>
+                  <div class='header'>
+                    <h2>Welcome to ETIER</h2>
+                </div>
+                  <div class='content'>
+                    <p>Dear <strong>$first_name</strong>,</p>
+                    <p>We’re excited to welcome you to <strong>ETIER</strong> – your go-to destination for stylish, high-quality apparel. Your account has been successfully created.</p>
+
+                    <p>As a registered member, you now have access to:</p>
+                    <ul>
+                      <li>Exclusive product launches and offers</li>
+                      <li>Faster checkout and order tracking</li>
+                      <li>Personalized recommendations</li>
+                    </ul>
+
+                    <p>You may now sign in and begin shopping.</p>
+
+                    <p>If you did not create this account or have any concerns, please let us know.</p>
+
+                    <p>Thank you for choosing Etier. We’re glad to have you with us!</p>
+
+                    <p>Warm regards,<br>
+                    <strong>The ETIER Team</strong></p>
+                  </div>
+                  <div class='footer'>
+                    &copy; 2025 BeyondOne | ETIER Clothing<br>
+                    This website is for educational purposes only and is a final project requirement.
+                  </div>
+                </body>
+                </html>";
+
                 $headers = "MIME-Version: 1.0\r\n";
                 $headers .= "Content-type:text/html;charset=UTF-8\r\n";
-                $headers .= "From: Etier <no-reply@yourdomain.com>\r\n";
+                $headers .= "From: Etier <no-reply@etier-clothing>\r\n";
 
                 if (mail($to, $subject, $body, $headers)) {
                     $message = "<div class='success'>Registered! Email sent to $email.</div>";
+                    echo "<script>setTimeout(function(){ window.location.href = 'signin.php'; }, 2000);</script>";
                 } else {
                     $message = "<div class='error-text'>Registered, but email failed to send.</div>";
                 }
@@ -78,6 +120,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['register'])) {
 
 include 'header.php';
 ?>
+
+
 
 <!DOCTYPE html>
 <html lang="en">
@@ -231,6 +275,6 @@ include 'header.php';
     Already have an account?
     <a href="signin.php" style="color: #E6BD37; text-decoration: underline;">Sign in</a>
 </p>
-
+<?php include 'footer.php'; ?>
 </body>
 </html>
