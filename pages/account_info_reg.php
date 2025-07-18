@@ -78,13 +78,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['register'])) {
                     if ($stmt->execute()) {
                         // Email content
                         $recipient_email = $email; // This is the user's email from the form
-                        $subject = "Welcome to ETIER – Your Account is Ready! 🎉;
+                        $subject = "Welcome to ETIER – Your Account is Ready! 🎉";
                         
                         // --- UPDATED EMAIL BODY STYLING ---
                         $email_body = "
                         <html>
                         <head>
                           <style>
+                            /* Use web-safe fonts and simple styles for email compatibility */
                             body { 
                                 font-family: Arial, Helvetica, sans-serif; 
                                 line-height: 1.6; 
