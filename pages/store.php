@@ -211,6 +211,11 @@ while ($row = $result->fetch_assoc()) {
         z-index: 10;
     }
 
+    .product-info {
+        cursor: pointer;
+    }
+
+
     #jackets .product-card,
     #bottoms .product-card {
         min-height: 550px;
@@ -339,13 +344,15 @@ while ($row = $result->fetch_assoc()) {
         /* iPad specific overrides for categories */
         #jackets .product-card,
         #bottoms .product-card {
-            min-height: 480px; 
+            min-height: 480px;
         }
+
         #jackets .image-container,
         #bottoms .image-container {
-            height: 300px; 
+            height: 300px;
         }
-        #bottoms .image-container { 
+
+        #bottoms .image-container {
             height: 500px;
         }
     }
@@ -435,6 +442,105 @@ while ($row = $result->fetch_assoc()) {
             font-size: 12px;
         }
     }
+
+    /* Smaller Phones (max-width: 480px) */
+    @media (max-width: 480px) {
+        .store-container {
+            margin-top: 80px;
+            padding: 10px;
+        }
+
+        .hero-banners-container {
+            margin-top: 40px;
+            grid-template-columns: 1fr;
+            gap: 15px;
+        }
+
+        .hero-banner {
+            height: 220px;
+        }
+
+        .hero-banner-text {
+            font-size: 16px;
+        }
+
+        .category-section {
+            padding: 0 10px;
+            margin-bottom: 30px;
+        }
+
+        h2.category-title {
+            font-size: 20px;
+            margin-bottom: 20px;
+        }
+
+        .product-grid {
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .product-card {
+            min-height: 250px;
+            padding-bottom: 20px;
+        }
+
+        .image-container {
+            height: 180px;
+        }
+
+        #jackets .image-container {
+            height: 200px;
+        }
+
+        #bottoms .image-container {
+            height: 300px;
+        }
+
+        #bottoms .product-card,
+        #jackets .product-card {
+            min-height: 300px;
+        }
+
+        .product-name {
+            font-size: 13px;
+        }
+
+        .product-brand {
+            font-size: 11px;
+        }
+
+        .product-price {
+            font-size: 14px;
+        }
+
+        .quickshop-button {
+            padding: 6px 20px;
+            font-size: 12px;
+        }
+    }
+
+    /* QuickShop responsiveness */
+    @media (max-width: 700px) {
+        .quickshop-button {
+            padding: 5px 15px;
+            font-size: 12px;
+        }
+
+        .quickshop-container {
+            padding: 10px 0;
+        }
+    }
+
+    @media (max-width: 300px) {
+        .quickshop-button {
+            padding: 4px 12px;
+            font-size: 11px;
+        }
+
+        .quickshop-container {
+            padding: 8px 0;
+        }
+    }
     </style>
 </head>
 
@@ -482,6 +588,32 @@ while ($row = $result->fetch_assoc()) {
         <?php endforeach; ?>
     </div>
     </div>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const productCards = document.querySelectorAll('.product-card');
+
+        productCards.forEach(card => {
+            const quickshop = card.querySelector('.quickshop-container');
+            const productInfo = card.querySelector('.product-info');
+
+            //show quickshop when product info is clicked
+            productInfo.addEventListener('click', function() {
+                quickshop.style.opacity = '1';
+                quickshop.style.visibility = 'visible';
+            });
+
+            //hide btn if the user clicks outside product card
+            document.addEventListener('click', function(e) {
+                if (!card.contains(e.target)) {
+                    quickshop.style.opacity = '0';
+                    quickshop.style.visibility = 'hidden';
+                }
+            });
+        });
+    });
+    </script>
+
 </body>
 <?php include 'footer.php'; ?>
 
