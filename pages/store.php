@@ -551,7 +551,7 @@ while ($row = $result->fetch_assoc()) {
         <div class="hero-banners-container">
             <a href="#tops" class="hero-banner">
                 <img src="../assets/accessories_look.jpg" alt="Casual">
-                <span class="hero-banner-text">KASUAL</span>
+                <span class="hero-banner-text">CASUAL</span>
             </a>
             <a href="#accessories" class="hero-banner">
                 <img src="../assets/casual_look.jpg" alt="Smart Casual">
