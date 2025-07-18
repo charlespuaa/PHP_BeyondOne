@@ -1,6 +1,4 @@
 <?php
-
-
 $first_name = $_POST['first_name'] ?? '';
 $middle_name = $_POST['middle_name'] ?? '';
 $last_name = $_POST['last_name'] ?? '';
@@ -13,6 +11,7 @@ $contact_number = $_POST['contact_number'] ?? '';
 <head>
     <meta charset="UTF-8">
     <title>Registration</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -46,14 +45,21 @@ $contact_number = $_POST['contact_number'] ?? '';
         label {
             display: block;
             margin-top: 15px;
+            font-size: 0.95rem;
         }
 
-        input[type="text"], input[type="date"] {
+        input[type="text"], input[type="date"], input[type="submit"] {
             width: 100%;
             padding: 8px;
             margin-top: 5px;
-            border: 1px solid #ccc;
+            font-size: 1rem;
             border-radius: 5px;
+            box-sizing: border-box;
+        }
+
+        input[type="text"], input[type="date"] {
+            border: 1px solid #ccc;
+            background: #fff;
         }
 
         input[type="submit"] {
@@ -61,11 +67,9 @@ $contact_number = $_POST['contact_number'] ?? '';
             color: #fff;
             font-weight: bold;
             margin-top: 20px;
-            padding: 12px;
-            width: 100%;
             border: none;
-            border-radius: 5px;
             cursor: pointer;
+            transition: background 0.3s, color 0.3s, border 0.3s;
         }
 
         input[type="submit"]:hover {
@@ -73,41 +77,44 @@ $contact_number = $_POST['contact_number'] ?? '';
             color: #E6BD37;
             border: 2px solid #E6BD37;
         }
-        /* responsiveness across devices */
-        @media (max-width: 768px) {
-            body { 
-            padding-top: 130px; 
-            padding-left: 10px; 
-            padding-right: 10px; 
-        }
-            h1 { 
-            font-size: 1.6rem;
-        }
-            input[type="submit"] { 
-            font-size: 0.95rem; 
-            padding: 10px; 
-        }
-            label { 
-            font-size: 0.9rem; 
-        }
 
+        /* responsiveness */
+        @media (max-width: 768px) {
+            body {
+                padding-top: 130px;
+                padding-left: 10px;
+                padding-right: 10px;
+            }
+
+            h1 {
+                font-size: 1.6rem;
+            }
+
+            input[type="submit"] {
+                font-size: 0.95rem;
+                padding: 10px;
+            }
+
+            label {
+                font-size: 0.9rem;
+            }
         }
 
         @media (max-width: 480px) {
-            h1 { 
-            font-size: 1.3rem; 
-        }
-            input[type="text"], input[type="date"] { 
-            font-size: 0.95rem; 
-            padding: 8px; 
-        }
-        
+            h1 {
+                font-size: 1.3rem;
+            }
+
+            input[type="text"], input[type="date"] {
+                font-size: 0.95rem;
+                padding: 8px;
+            }
         }
     </style>
     <?php include 'header.php'; ?>
- </head>
+</head>
 <body>
-<h1>Registration</h1>
+<h1 style="color: #E6BD37;">Registration</h1>
 <form method="post" action="address_info_reg.php">
     <fieldset>
         <legend>Personal Information</legend>
