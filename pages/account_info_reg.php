@@ -63,6 +63,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['register'])) {
 
                 if (mail($to, $subject, $body, $headers)) {
                     $message = "<div class='success'>Registered! Email sent to $email.</div>";
+                    echo "<script>setTimeout(function(){ window.location.href = 'signin.php'; }, 2000);</script>";
                 } else {
                     $message = "<div class='error-text'>Registered, but email failed to send.</div>";
                 }
