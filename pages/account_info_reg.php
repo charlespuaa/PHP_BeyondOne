@@ -231,6 +231,6 @@ include 'header.php';
     Already have an account?
     <a href="signin.php" style="color: #E6BD37; text-decoration: underline;">Sign in</a>
 </p>
-
+<?php include 'footer.php'; ?>
 </body>
 </html>
