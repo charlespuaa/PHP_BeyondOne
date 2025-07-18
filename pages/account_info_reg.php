@@ -84,6 +84,7 @@ include 'header.php';
 <head>
     <meta charset="UTF-8">
     <title>Registration</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
         h1 {
             text-align: center;
