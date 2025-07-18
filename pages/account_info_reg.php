@@ -1,18 +1,33 @@
 <?php
+session_start();
+
+// Include PHPMailer classes
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\Exception;
+
+// Corrected paths based on your folder structure: PHP_BeyondOne/PHPMailer/
+require __DIR__ . '/../PHPMailer/Exception.php';
+require __DIR__ . '/../PHPMailer/PHPMailer.php';
+require __DIR__ . '/../PHPMailer/SMTP.php';
+
+
+// Database connection details
 $host = 'localhost';
-$db   = 'etierreg';
+$db   = 'etierproducts';
 $user = 'root';
 $pass = '';
-
+ 
 $conn = new mysqli($host, $user, $pass, $db);
 if ($conn->connect_error) die("Connection failed: " . $conn->connect_error);
 
 $message = "";
 
+// Retain form inputs
 $username = trim($_POST['username'] ?? '');
 $password = $_POST['password'] ?? '';
 $confirm_password = $_POST['confirm_password'] ?? '';
 
+// Retain hidden fields from previous steps
 $first_name = $_POST['first_name'] ?? '';
 $middle_name = $_POST['middle_name'] ?? '';
 $last_name = $_POST['last_name'] ?? '';
@@ -30,200 +45,354 @@ $region = $_POST['region'] ?? '';
 
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['register'])) {
     if (empty($first_name) || empty($last_name) || empty($birthday) || empty($email) || empty($contact_number)) {
-        setcookie("form_message", "<div class='error-text'>Please complete your personal information before registering.</div>", time() + 5, "/");
-    }
-    elseif (empty($street_name) || empty($house_number) || empty($barangay) || empty($province) || empty($city) || empty($region) || empty($postal_code)) {
-        setcookie("form_message", "<div class='error-text'>Please complete your address information before registering.</div>", time() + 5, "/");
-    }
-    elseif (!preg_match("/^[A-Za-z0-9_]{3,20}$/", $username)) {
-        setcookie("form_message", "<div class='error-text'>Invalid username format.</div>", time() + 5, "/");
+        $message = "<div class='error-text'>Please complete your personal information before registering.</div>";
+    } elseif (empty($street_name) || empty($house_number) || empty($barangay) || empty($province) || empty($city) || empty($region) || empty($postal_code)) {
+        $message = "<div class='error-text'>Please complete your address information before registering.</div>";
+    } elseif (!preg_match("/^[A-Za-z0-9_]{3,20}$/", $username)) {
+        $message = "<div class='error-text'>Invalid username format. Username must be 3-20 characters, alphanumeric or underscore.</div>";
     } elseif (!preg_match("/^.{6,}$/", $password)) {
-        setcookie("form_message", "<div class='error-text'>Password must be at least 6 characters.</div>", time() + 5, "/");
+        $message = "<div class='error-text'>Password must be at least 6 characters.</div>";
     } elseif ($password !== $confirm_password) {
-        setcookie("form_message", "<div class='error-text'>Passwords do not match.</div>", time() + 5, "/");
+        $message = "<div class='error-text'>Passwords do not match.</div>";
     } else {
-        $hashed_password = password_hash($password, PASSWORD_DEFAULT);
-        $stmt = $conn->prepare("INSERT INTO users 
-            (first_name, middle_name, last_name, birthday, street_name, house_number, building, postal_code, barangay, province, city, region, username, password, email, contact_number)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-        if ($stmt) {
-            $stmt->bind_param("ssssssssssssssss",
-                $first_name, $middle_name, $last_name, $birthday,
-                $street_name, $house_number, $building, $postal_code,
-                $barangay, $province, $city, $region,
-                $username, $hashed_password, $email, $contact_number
-            );
-            if ($stmt->execute()) {
-                $to = $email;
-                $subject = "Welcome to Etier!";
-                $body = "<html><body><h3>Hello $first_name!</h3><p>This is to inform you that you created an account in Etier. Please confirm by signing into our website using the credentials you have entered. If this was not you please contact us at etiercustomerservice@gmail.com.</p></body></html>";
-                $headers = "MIME-Version: 1.0\r\n";
-                $headers .= "Content-type:text/html;charset=UTF-8\r\n";
-                $headers .= "From: Etier <no-reply@yourdomain.com>\r\n";
-
-                if (mail($to, $subject, $body, $headers)) {
-                    setcookie("form_message", "<div class='success'>Registered! Email sent to $email.</div>", time() + 5, "/");
-                } else {
-                    setcookie("form_message", "<div class='error-text'>Registered, but email failed to send.</div>", time() + 5, "/");
-                }
-                $username = "";
+        // Check if username or email already exists
+        $check_stmt = $conn->prepare("SELECT id FROM users WHERE username = ? OR email = ?");
+        if ($check_stmt) {
+            $check_stmt->bind_param("ss", $username, $email);
+            $check_stmt->execute();
+            $check_stmt->store_result();
+            if ($check_stmt->num_rows > 0) {
+                $message = "<div class='error-text'>Username or Email already exists. Please choose a different one.</div>";
             } else {
-                setcookie("form_message", "<div class='error-text'>DB error: {$stmt->error}</div>", time() + 5, "/");
+                $hashed_password = password_hash($password, PASSWORD_DEFAULT);
+                $stmt = $conn->prepare("INSERT INTO users 
+                    (first_name, middle_name, last_name, birthday, street_name, house_number, building, postal_code, barangay, province, city, region, username, password, email, contact_number)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+                if ($stmt) {
+                    $stmt->bind_param("ssssssssssssssss",
+                        $first_name, $middle_name, $last_name, $birthday,
+                        $street_name, $house_number, $building, $postal_code,
+                        $barangay, $province, $city, $region,
+                        $username, $hashed_password, $email, $contact_number
+                    );
+                    if ($stmt->execute()) {
+                        // Email content
+                        $recipient_email = $email; // This is the user's email from the form
+                        $subject = "Welcome to ETIER – Your Account is Ready! 🎉";
+                        
+                        // --- UPDATED EMAIL BODY STYLING ---
+                        $email_body = "
+                        <html>
+                        <head>
+                          <style>
+                            /* Use web-safe fonts and simple styles for email compatibility */
+                            body { 
+                                font-family: Arial, Helvetica, sans-serif; 
+                                line-height: 1.6; 
+                                color: #333; 
+                            }
+                            .header { 
+                                background-color: #E6BD37; 
+                                padding: 20px; 
+                                text-align: center; 
+                                color: white; 
+                            }
+                            .content { 
+                                padding: 20px; 
+                            }
+                            .footer { 
+                                font-size: 0.9em; 
+                                color: #777; 
+                                text-align: center; 
+                                padding: 20px; 
+                                border-top: 1px solid #ddd; 
+                                margin-top: 30px; 
+                            }
+                            /* Optional: Inline styles for critical elements if needed, though PHPMailer often handles this */
+                            p, ul, li, strong {
+                                font-family: Arial, Helvetica, sans-serif; 
+                                color: #333;
+                            }
+                          </style>
+                        </head>
+                        <body>
+                          <div class='header'>
+                            <h2>Welcome to ETIER</h2>
+                          </div>
+                          <div class='content'>
+                            <p>Dear <strong style='font-family: Arial, Helvetica, sans-serif;'>" . htmlspecialchars($first_name) . "</strong>,</p>
+                            <p>We’re excited to welcome you to <strong>ETIER</strong> – your go-to destination for stylish, high-quality apparel. Your account has been successfully created.</p>
+
+                            <p>As a registered member, you now have access to:</p>
+                            <ul>
+                              <li>Exclusive product launches and offers</li>
+                              <li>Faster checkout and order tracking</li>
+                              <li>Personalized recommendations</li>
+                            </ul>
+
+                            <p>You may now sign in and begin shopping.</p>
+
+                            <p>If you did not create this account or have any concerns, please let us know.</p>
+
+                            <p>Thank you for choosing Etier. We’re glad to have you with us!</p>
+
+                            <p>Warm regards,<br>
+                            <strong>The ETIER Team</strong><br>
+                            Collo, Paul Benedict<br>
+                            Cueto, Alexa Joyce<br>
+                            Pua, Charles Michael<br>
+                            Wei, Wen Xuan</p>
+                          </div>
+                          <div class='footer'>
+                            &copy; 2025 BeyondOne | ETIER Clothing<br>
+                            This website is for educational purposes only and is a final project requirement.
+                          </div>
+                        </body>
+                        </html>";
+
+                        // PHPMailer setup
+                        $mail = new PHPMailer(true); // Passing `true` enables exceptions
+
+                        try {
+                            //Server settings
+                            $mail->isSMTP();
+                            $mail->Host       = 'smtp.gmail.com';
+                            $mail->SMTPAuth   = true;
+                            $mail->Username   = 'iacedos11@gmail.com';
+                            $mail->Password   = 'jmtipygfrkhamygu';
+                            $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+                            $mail->Port       = 587;
+
+                            //Recipients
+                            $mail->setFrom('iacedos11@gmail.com', 'ETIER Clothing');
+                            $mail->addAddress($recipient_email, htmlspecialchars($first_name . ' ' . $last_name));
+
+                            // Content
+                            $mail->isHTML(true);
+                            $mail->Subject = $subject;
+                            $mail->Body    = $email_body;
+                            $mail->AltBody = strip_tags($email_body); // Plain text alternative
+
+                            $mail->send();
+                            $message = "<div class='success'>Registered successfully! A welcome email has been sent to " . htmlspecialchars($email) . ".</div>";
+                            echo "<script>setTimeout(function(){ window.location.href = 'signin.php'; }, 2000);</script>";
+                        } catch (Exception $e) {
+                            $message = "<div class='error-text'>Registered successfully, but failed to send welcome email. Mailer Error: {$mail->ErrorInfo}</div>";
+                            error_log("PHPMailer Error: " . $e->getMessage());
+                            echo "<script>setTimeout(function(){ window.location.href = 'signin.php'; }, 2000);</script>";
+                        }
+                    } else {
+                        $message = "<div class='error-text'>Database error during registration: {$stmt->error}</div>";
+                    }
+                    $stmt->close();
+                } else {
+                    $message = "<div class='error-text'>Prepare statement error: {$conn->error}</div>";
+                }
             }
-            $stmt->close();
+            $check_stmt->close();
         } else {
-            setcookie("form_message", "<div class='error-text'>Prepare error: {$conn->error}</div>", time() + 5, "/");
+            $message = "<div class='error-text'>Database prepare error for username/email check: {$conn->error}</div>";
         }
     }
-    header("Location: ".$_SERVER['PHP_SELF']);
-    exit;
 }
 
-if (isset($_COOKIE['form_message'])) {
-    $message = $_COOKIE['form_message'];
-    setcookie("form_message", "", time() - 3600, "/");
-}
-
+// Include header.php AFTER all potential POST processing and redirects
 include 'header.php';
 ?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Registration</title>
+    <title>Registration - Etier</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
-    h1 {
-    text-align: center;
-    margin-bottom: 30px;
-    font-size: 2rem;
-    color: #E6BD37; 
-    }
+        /* Sticky Footer CSS */
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden; /* Prevent horizontal scrolling */
+        }
 
-    body {
-        font-family: Arial, sans-serif;
-        color: #000;
-        background: #fff;
-        padding: 20px;
-        padding-top: 200px;
-    }
+        body {
+            font-family: Arial, sans-serif;
+            color: #000;
+            background: #fff;
+            display: flex; /* Use flexbox for sticky footer */
+            flex-direction: column; /* Stack children vertically */
+            padding-top: 170px; /* Adjust based on header height */
+            box-sizing: border-box; /* Include padding in element's total width and height */
+        }
 
-    fieldset {
-        border: 2px solid #E6BD37;
-        border-radius: 10px;
-        padding: 20px;
-        background: #fff;
-        max-width: 500px;
-        margin: auto;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-        transition: transform 0.2s, box-shadow 0.2s;
-    }
+        .main-content-wrapper {
+            flex: 1; /* This div will grow to fill available space, pushing footer down */
+            padding: 20px; /* Add padding here instead of directly on body for content */
+            padding-bottom: 50px; /* Add some space before the footer starts */
+            box-sizing: border-box;
+        }
 
-    fieldset:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 6px 18px rgba(0,0,0,0.15);
-    }
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2rem;
+        }
+        fieldset {
+            border: 2px solid #E6BD37;
+            border-radius: 10px;
+            padding: 20px;
+            background: #fff;
+            width: 90%; /* Use percentage for responsiveness */
+            max-width: 480px; /* Max width for larger screens */
+            margin: auto; /* Center the fieldset */
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-sizing: border-box; /* Include padding in element's total width and height */
+        }
+        fieldset:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 18px rgba(0,0,0,0.15);
+        }
+        legend {
+            font-weight: bold;
+            color: #E6BD37;
+            font-size: 1.2rem;
+        }
+        label {
+            display: block;
+            margin-top: 15px;
+            font-size: 1rem;
+        }
+        input[type="text"], input[type="password"], input[type="email"], input[type="tel"], input[type="date"] {
+            width: 100%;
+            padding: 10px;
+            margin-top: 6px;
+            font-size: 1rem;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            background: #F9F9F9;
+            box-sizing: border-box;
+        }
+        input[type="submit"] {
+            background: #E6BD37;
+            color: #fff;
+            font-weight: bold;
+            margin-top: 20px;
+            padding: 14px;
+            font-size: 1.1rem;
+            width: 100%;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s, color 0.3s, border 0.3s;
+        }
+        input[type="submit"]:hover {
+            background: #fff;
+            color: #E6BD37;
+            border: 2px solid #E6BD37;
+        }
+        .success {
+            color: green;
+            text-align: center;
+            padding: 10px;
+            margin-top: 15px;
+            font-size: 1rem;
+        }
+        .error-text {
+            color: red;
+            text-align: center;
+            padding: 10px;
+            margin-top: 15px;
+            font-size: 1rem;
+        }
 
-    legend {
-        font-weight: bold;
-        color: #E6BD37;
-    }
+        /* Responsiveness */
+        @media (max-width: 768px) {
+            body {
+                padding-top: 130px; /* Adjust for smaller header on tablets */
+            }
+            .main-content-wrapper {
+                padding: 15px; /* Adjust padding for tablet */
+            }
+            h1 {
+                font-size: 1.7rem;
+            }
+            fieldset {
+                padding: 16px;
+            }
+            input[type="submit"] {
+                font-size: 1rem;
+                padding: 10px;
+            }
+        }
 
-    label {
-        display: block;
-        margin-top: 15px;
-    }
-
-    input[type="text"], input[type="password"] {
-        width: 100%;
-        padding: 8px;
-        margin-top: 5px;
-        border: 1px solid #ccc;
-        border-radius: 5px;
-        background: #F9F9F9;
-        box-sizing: border-box;
-    }
-
-    input[type="submit"], .signin-button {
-        background: #E6BD37;
-        color: #fff;
-        font-weight: bold;
-        margin-top: 20px;
-        padding: 12px;
-        width: 100%;
-        border: none;
-        border-radius: 5px;
-        cursor: pointer;
-        display: block;
-        transition: background 0.3s, color 0.3s, border 0.3s;
-    }
-
-    input[type="submit"]:hover, .signin-button:hover {
-        background: #fff;
-        color: #E6BD37;
-        border: 2px solid #E6BD37;
-    }
-
-    .success, .error-text {
-        text-align: center;
-        padding: 5px;
-        margin-top: 10px;
-        font-size: 14px;
-    }
-
-    .success { color: green; }
-    .error-text { color: red; }
-
-    .back-container {
-        max-width: 500px;
-        margin: 20px auto;
-        padding: 15px;
-        border: 2px solid #E6BD37;
-        border-radius: 10px;
-        text-align: center;
-        background: #fff;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-        transition: transform 0.2s, box-shadow 0.2s;
-    }
-
-    .back-container:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 6px 18px rgba(0,0,0,0.15);
-    }
-</style>
+        @media (max-width: 480px) {
+            body {
+                padding-top: 100px; /* Adjust for smaller header on phones */
+            }
+            .main-content-wrapper {
+                padding: 10px; /* Adjust padding for phones */
+                padding-bottom: 30px; /* Less space before footer on small screens */
+            }
+            h1 {
+                font-size: 1.5rem;
+            }
+            fieldset {
+                padding: 14px;
+            }
+            input[type="text"], input[type="password"], input[type="email"], input[type="tel"], input[type="date"] {
+                padding: 8px;
+                font-size: 0.95rem;
+            }
+            input[type="submit"] {
+                font-size: 0.95rem;
+                padding: 9px;
+            }
+            label {
+                font-size: 0.95rem;
+            }
+        }
+    </style>
 </head>
 <body>
 
-<h1 style="text-align:center;">Registration</h1>
-<form method="post">
-    <fieldset>
-        <legend>Account Information</legend>
-        <label>Username</label>
-        <input type="text" name="username" value="<?= htmlspecialchars($username) ?>" pattern="^[A-Za-z0-9_]{3,20}$" required>
+    <!-- This wrapper will contain all content that should push the footer down -->
+    <div class="main-content-wrapper">
+        <h1>Registration</h1>
+        <form method="post">
+            <fieldset>
+                <legend>Account Information</legend>
+                <label>Username</label>
+                <input type="text" name="username" value="<?= htmlspecialchars($username) ?>" required>
 
-        <label>Password</label>
-        <input type="password" name="password" required>
+                <label>Password</label>
+                <input type="password" name="password" required>
 
-        <label>Confirm Password</label>
-        <input type="password" name="confirm_password" required>
+                <label>Confirm Password</label>
+                <input type="password" name="confirm_password" required>
 
-        <?php foreach ($_POST as $key => $value): ?>
-            <?php if (!in_array($key, ['username','password','confirm_password','register'])): ?>
-                <input type="hidden" name="<?= htmlspecialchars($key) ?>" value="<?= htmlspecialchars($value) ?>">
-            <?php endif; ?>
-        <?php endforeach; ?>
+                <?php
+                // This loop correctly retains hidden fields from previous steps
+                foreach ($_POST as $key => $value) {
+                    if (!in_array($key, ['username', 'password', 'confirm_password', 'register'])) {
+                        echo '<input type="hidden" name="' . htmlspecialchars($key) . '" value="' . htmlspecialchars($value) . '">';
+                    }
+                }
+                ?>
 
-        <?php if (!empty($message)) echo $message; ?>
+                <?= $message ?>
 
-        <input type="submit" name="register" value="Register">
-    </fieldset>
-</form>
+                <input type="submit" name="register" value="Register">
+            </fieldset>
+        </form>
 
-<div class="back-container">
-    <p>Already have an account?</p>
-    <form action="signin.php" method="get">
-        <button type="submit" class="signin-button">Go back to sign in</button>
-    </form>
-</div>
+        <p style="text-align:center; margin-top: 20px;">
+            Already have an account?
+            <a href="signin.php" style="color: #E6BD37; text-decoration: underline;">Sign in</a>
+        </p>
+    </div>
+
+    <?php include 'footer.php'; // Footer is now correctly inside the body and after main content ?>
 
 </body>
 </html>

@@ -4,7 +4,7 @@
     <img src="../assets/bj_logo_transparent.png" alt="BeyondOne Logo">
   </div>
   <div class="footer-text">
-    &copy; <?= date('Y') ?> <strong>BeyondOne</strong> | Etier Clothing
+    &copy; <?= date('Y') ?> <strong>BeyondOne</strong> | ETIER Clothing
   </div>
   <div class="footer-subtext">
     this website is for <strong>educational purposes only</strong> and is a final project requirement.
@@ -41,7 +41,7 @@
   }
 
   .etier-footer strong {
-    color: #000;
+    color: #56585aff;
   }
 
   @media (max-width: 600px) {

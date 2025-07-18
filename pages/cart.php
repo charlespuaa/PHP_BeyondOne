@@ -1,660 +1,395 @@
 <?php
 session_start();
+include '../db.php';
 
-$host = 'localhost';
-$db   = 'etierreg';
-$user = 'root';
-$pass = '';
-$conn = new mysqli($host, $user, $pass, $db);
+$user_id = null; // Initialize user_id as null
 
-if ($conn->connect_error) {
-    die("Connection failed: " . $conn->connect_error);
-}
+// Check if user is logged in
+$is_logged_in = isset($_SESSION['user_id']);
 
-if (!isset($_SESSION['cart'])) {
-    $_SESSION['cart'] = [];
-}
+if ($is_logged_in) {
+    $user_id = $_SESSION['user_id'];
 
-$user_id = isset($_SESSION['user_id']) ? $_SESSION['user_id'] : null;
+    // Handle adding to cart (only if logged in)
+    if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'add_to_cart') {
+        $product_id = intval($_POST['product_id']);
+        $size = htmlspecialchars($_POST['size']);
+        $quantity = intval($_POST['quantity']);
 
+        if ($quantity <= 0) $quantity = 1;
 
-if ($user_id) {
+        $stmt = $conn->prepare("SELECT id, quantity FROM cart WHERE user_id = ? AND product_id = ? AND size = ?");
+        $stmt->bind_param("iis", $user_id, $product_id, $size);
+        $stmt->execute();
+        $stmt->store_result();
 
-    $sql = "SELECT product_id, quantity FROM cart WHERE user_id = ?";
-    $stmt = $conn->prepare($sql);
-    $stmt->bind_param("i", $user_id);
-    $stmt->execute();
-    $result = $stmt->get_result();
-    
-    $db_cart = [];
-    while ($row = $result->fetch_assoc()) {
-        $db_cart[$row['product_id']] = $row['quantity'];
-    }
-    
-  
-    foreach ($_SESSION['cart'] as $id => $quantity) {
-        if (isset($db_cart[$id])) {
-            $new_quantity = $db_cart[$id] + $quantity;
-            $sql = "UPDATE cart SET quantity = ? WHERE user_id = ? AND product_id = ?";
-            $stmt = $conn->prepare($sql);
-            $stmt->bind_param("iii", $new_quantity, $user_id, $id);
-            $stmt->execute();
+        if ($stmt->num_rows > 0) {
+            $stmt->bind_result($cart_item_id, $current_quantity);
+            $stmt->fetch();
+            $new_quantity = $current_quantity + $quantity;
+            $update_stmt = $conn->prepare("UPDATE cart SET quantity = ? WHERE id = ?");
+            $update_stmt->bind_param("ii", $new_quantity, $cart_item_id);
+            $update_stmt->execute();
+            $update_stmt->close();
         } else {
-            $sql = "INSERT INTO cart (user_id, product_id, quantity) VALUES (?, ?, ?)";
-            $stmt = $conn->prepare($sql);
-            $stmt->bind_param("iii", $user_id, $id, $quantity);
-            $stmt->execute();
+            $insert_stmt = $conn->prepare("INSERT INTO cart (user_id, product_id, quantity, size) VALUES (?, ?, ?, ?)");
+            $insert_stmt->bind_param("iiis", $user_id, $product_id, $quantity, $size);
+            $insert_stmt->execute();
+            $insert_stmt->close();
         }
+        $stmt->close();
+        header('Location: cart.php');
+        exit();
     }
-    
-    $sql = "SELECT p.id, p.name, p.price, p.image, c.quantity 
-            FROM cart c 
-            JOIN products p ON c.product_id = p.id 
-            WHERE c.user_id = ?";
+
+    // Handle updating quantity (only if logged in)
+    if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'update_quantity') {
+        $cart_item_id = intval($_POST['cart_item_id']);
+        $new_quantity = intval($_POST['quantity']);
+
+        if ($new_quantity <= 0) {
+            $delete_stmt = $conn->prepare("DELETE FROM cart WHERE id = ? AND user_id = ?");
+            $delete_stmt->bind_param("ii", $cart_item_id, $user_id);
+            $delete_stmt->execute();
+            $delete_stmt->close();
+        } else {
+            $update_stmt = $conn->prepare("UPDATE cart SET quantity = ? WHERE id = ? AND user_id = ?");
+            $update_stmt->bind_param("iii", $new_quantity, $cart_item_id, $user_id);
+            $update_stmt->execute();
+            $update_stmt->close();
+        }
+        header('Location: cart.php');
+        exit();
+    }
+
+    // Handle removing item (only if logged in)
+    if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'remove_item') {
+        $cart_item_id = intval($_POST['cart_item_id']);
+        $delete_stmt = $conn->prepare("DELETE FROM cart WHERE id = ? AND user_id = ?");
+        $delete_stmt->bind_param("ii", $cart_item_id, $user_id);
+        $delete_stmt->execute();
+        $delete_stmt->close();
+        header('Location: cart.php');
+        exit();
+    }
+
+    // Handle checkout (only if logged in)
+    if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'checkout') {
+        // Verify cart is not empty
+        $check_cart = $conn->prepare("SELECT COUNT(*) FROM cart WHERE user_id = ?");
+        $check_cart->bind_param("i", $user_id);
+        $check_cart->execute();
+        $check_cart->bind_result($cart_count);
+        $check_cart->fetch();
+        $check_cart->close();
+
+        if ($cart_count == 0) {
+            $_SESSION['error'] = "Your cart is empty. Please add items before checkout.";
+            header('Location: cart.php');
+            exit();
+        }
+        
+        // Redirect to payment page
+        header('Location: payment.php');
+        exit();
+    }
+
+    // Fetch cart items (only if logged in)
+    $cart_items = [];
+    $total_price = 0;
+
+    $sql = "SELECT c.id as cart_item_id, p.id as product_id, p.name, p.price, p.image, p.hover_image, c.quantity, c.size
+            FROM cart c
+            JOIN products p ON c.product_id = p.id
+            WHERE c.user_id = ? ORDER BY c.added_at DESC";
     $stmt = $conn->prepare($sql);
     $stmt->bind_param("i", $user_id);
     $stmt->execute();
     $result = $stmt->get_result();
-    
-    $cart = [];
-    $total = 0;
+
     while ($row = $result->fetch_assoc()) {
-        $cart[$row['id']] = [
-            'name' => $row['name'],
-            'price' => $row['price'],
-            'image' => $row['image'],
-            'quantity' => $row['quantity'],
-            'subtotal' => $row['price'] * $row['quantity']
-        ];
-        $total += $cart[$row['id']]['subtotal'];
-        $_SESSION['cart'][$row['id']] = $row['quantity']; // 更新会话
+        $cart_items[] = $row;
+        $total_price += $row['price'] * $row['quantity'];
     }
+    $stmt->close();
 } else {
-    $cart = [];
-    $total = 0;
-    
-    if (!empty($_SESSION['cart'])) {
-        $ids = implode(',', array_keys($_SESSION['cart']));
-        $sql = "SELECT id, name, price, image FROM products WHERE id IN ($ids)";
-        $result = $conn->query($sql);
-        
-        while ($row = $result->fetch_assoc()) {
-            $quantity = $_SESSION['cart'][$row['id']];
-            $cart[$row['id']] = [
-                'name' => $row['name'],
-                'price' => $row['price'],
-                'image' => $row['image'],
-                'quantity' => $quantity,
-                'subtotal' => $row['price'] * $quantity
-            ];
-            $total += $cart[$row['id']]['subtotal'];
-        }
-    }
+    // If not logged in, ensure cart_items and total_price are empty/zero
+    $cart_items = [];
+    $total_price = 0;
 }
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    if (isset($_POST['update_cart'])) {
-        foreach ($_POST['quantity'] as $id => $quantity) {
-            $id = intval($id);
-            $quantity = intval($quantity);
-            
-            if ($quantity > 0) {
-                $_SESSION['cart'][$id] = $quantity;
-                
-                if ($user_id) {
-                    $sql = "UPDATE cart SET quantity = ? WHERE user_id = ? AND product_id = ?";
-                    $stmt = $conn->prepare($sql);
-                    $stmt->bind_param("iii", $quantity, $user_id, $id);
-                    $stmt->execute();
-                    
-                    if ($stmt->affected_rows === 0) {
-                        $sql = "INSERT INTO cart (user_id, product_id, quantity) VALUES (?, ?, ?)";
-                        $stmt = $conn->prepare($sql);
-                        $stmt->bind_param("iii", $user_id, $id, $quantity);
-                        $stmt->execute();
-                    }
-                }
-            } else {
-                unset($_SESSION['cart'][$id]);
-                
-                if ($user_id) {
-                    $sql = "DELETE FROM cart WHERE user_id = ? AND product_id = ?";
-                    $stmt = $conn->prepare($sql);
-                    $stmt->bind_param("ii", $user_id, $id);
-                    $stmt->execute();
-                }
-            }
-        }
-        
-        header("Location: cart.php");
-        exit;
-    } elseif (isset($_POST['apply_coupon'])) {
-        $coupon_code = trim($_POST['coupon_code']);
-        if ($coupon_code === 'ETIER10') {
-            $_SESSION['coupon'] = 0.10; // 10%折扣
-        } else {
-            $_SESSION['coupon_error'] = "Invalid coupon code";
-        }
-        
-        header("Location: cart.php");
-        exit;
-    }
-}
-
-if (isset($_GET['action']) && isset($_GET['id'])) {
-    $id = intval($_GET['id']);
-    
-    if ($_GET['action'] === 'remove') {
-        unset($_SESSION['cart'][$id]);
-        
-        if ($user_id) {
-            $sql = "DELETE FROM cart WHERE user_id = ? AND product_id = ?";
-            $stmt = $conn->prepare($sql);
-            $stmt->bind_param("ii", $user_id, $id);
-            $stmt->execute();
-        }
-        
-        header("Location: cart.php");
-        exit;
-    } elseif ($_GET['action'] === 'clear') {
-        $_SESSION['cart'] = [];
-        
-        if ($user_id) {
-            $sql = "DELETE FROM cart WHERE user_id = ?";
-            $stmt = $conn->prepare($sql);
-            $stmt->bind_param("i", $user_id);
-            $stmt->execute();
-        }
-        
-        header("Location: cart.php");
-        exit;
-    }
-}
-
-$subtotal = $total;
-$shipping = 0;
-$tax_rate = 0.12;
-$tax = $subtotal * $tax_rate;
-$coupon_discount = isset($_SESSION['coupon']) ? $subtotal * $_SESSION['coupon'] : 0;
-$grand_total = $subtotal + $shipping + $tax - $coupon_discount;
-
-include 'header.php';
+$conn->close();
 ?>
 
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Shopping Cart | Etier</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Cart | Etier</title>
+    <?php include 'header.php'; ?>
     <style>
         body {
             font-family: 'Proxima Nova', sans-serif;
-            background: #fff9f9ff;
-            color: #333;
-            padding-top: 200px;
-        }
-
-        .cart-container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 20px;
-        }
-
-        .cart-header {
+            background-color: #f9f9f9;
+            margin: 0;
+            padding: 0;
             display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 30px;
-            border-bottom: 1px solid #eee;
-            padding-bottom: 15px;
+            flex-direction: column;
+            min-height: 100vh;
         }
-
-        .cart-title {
-            font-size: 2.5em;
+        .page-content {
+            flex: 1;
+            padding-top: 180px;
+            padding-bottom: 90px;
+        }
+        .cart-container {
+            max-width: 900px;
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        .cart-header {
+            font-size: 28px;
             font-weight: bold;
-            color: #E6BD37;
+            margin-bottom: 30px;
+            text-align: center;
+            color: #333;
         }
-
-        .clear-cart {
-            background: transparent;
-            border: none;
-            color: #777;
-            font-size: 1em;
-            cursor: pointer;
-            padding: 5px 10px;
-            transition: color 0.3s;
+        /* New styles for the sign-in prompt */
+        .signin-prompt {
+            text-align: center;
+            padding: 50px 20px;
+            border: 1px dashed #E6BD37;
+            border-radius: 8px;
+            background-color: #fffaf0; /* Light gold background */
+            margin-top: 30px;
         }
-
-        .clear-cart:hover {
-            color: #d9534f;
+        .signin-prompt h2 {
+            font-size: 24px;
+            color: #333;
+            margin-bottom: 15px;
         }
-
-        .cart-items {
-            margin-bottom: 40px;
+        .signin-prompt p {
+            font-size: 16px;
+            color: #555;
+            margin-bottom: 25px;
+            line-height: 1.6;
         }
-
+        .signin-link {
+            display: inline-block;
+            background: black;
+            color: white;
+            padding: 12px 25px;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: bold;
+            transition: background-color 0.3s ease;
+        }
+        .signin-link:hover {
+            background-color: #E6BD37;
+        }
+        /* Existing cart styles below */
         .cart-item {
-            display: grid;
-            grid-template-columns: 120px 2fr 1fr 1fr 1fr;
-            gap: 20px;
+            display: flex;
             align-items: center;
-            padding: 20px 0;
             border-bottom: 1px solid #eee;
+            padding: 20px 0;
+            gap: 20px;
         }
-
-        .item-image {
+        .cart-item:last-child {
+            border-bottom: none;
+        }
+        .cart-item-image {
             width: 100px;
             height: 100px;
             object-fit: cover;
             border-radius: 4px;
+            border: 1px solid #ddd;
         }
-
-        .item-details {
-            padding-right: 20px;
+        .cart-item-details {
+            flex-grow: 1;
         }
-
-        .item-name {
+        .cart-item-name {
             font-weight: bold;
-            font-size: 1.1em;
+            font-size: 18px;
             margin-bottom: 5px;
         }
-
-        .item-brand {
-            color: #888F92;
-            font-size: 0.9em;
+        .cart-item-size, .cart-item-price {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 5px;
         }
-
-        .item-price {
-            font-weight: bold;
-            color: #000;
-            font-size: 1.1em;
-        }
-
-        .item-quantity {
+        .cart-item-quantity {
             display: flex;
             align-items: center;
-        }
-
-        .quantity-btn {
-            width: 30px;
-            height: 30px;
-            background: #f1f1f1;
-            border: none;
-            font-size: 1.2em;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .quantity-input {
-            width: 50px;
-            height: 30px;
-            text-align: center;
-            border: 1px solid #ddd;
-            margin: 0 5px;
-        }
-
-        .item-subtotal {
-            font-weight: bold;
-            font-size: 1.1em;
-        }
-
-        .item-remove {
-            color: #777;
-            background: none;
-            border: none;
-            cursor: pointer;
-            font-size: 1.2em;
-        }
-
-        .cart-summary {
-            display: grid;
-            grid-template-columns: 2fr 1fr;
-            gap: 30px;
-            margin-top: 40px;
-        }
-
-        .summary-box {
-            background: #fff;
-            border-radius: 8px;
-            padding: 25px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
-        }
-
-        .summary-title {
-            font-size: 1.5em;
-            font-weight: bold;
-            margin-bottom: 20px;
-            color: #333;
-            border-bottom: 1px solid #eee;
-            padding-bottom: 15px;
-        }
-
-        .summary-row {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 15px;
-        }
-
-        .summary-label {
-            color: #555;
-        }
-
-        .summary-value {
-            font-weight: bold;
-        }
-
-        .summary-total {
-            font-size: 1.3em;
-            margin-top: 20px;
-            padding-top: 15px;
-            border-top: 1px solid #eee;
-        }
-
-        .btn {
-            display: inline-block;
-            padding: 15px 30px;
-            text-align: center;
-            font-weight: bold;
-            border-radius: 4px;
-            cursor: pointer;
-            transition: all 0.3s;
-            text-decoration: none;
-            font-size: 1.1em;
-            width: 100%;
-            margin-top: 20px;
-        }
-
-        .btn-continue {
-            background: transparent;
-            color: #333;
-            border: 2px solid #333;
-        }
-
-        .btn-continue:hover {
-            background: #333;
-            color: #fff;
-        }
-
-        .btn-checkout {
-            background: #E6BD37;
-            color: #000;
-            border: none;
-        }
-
-        .btn-checkout:hover {
-            background: #d9aa2f;
-        }
-
-        .empty-cart {
-            text-align: center;
-            padding: 60px 0;
-        }
-
-        .empty-cart-icon {
-            font-size: 5em;
-            color: #ddd;
-            margin-bottom: 20px;
-        }
-
-        .empty-cart-message {
-            font-size: 1.5em;
-            margin-bottom: 30px;
-            color: #777;
-        }
-
-        .btn-shopping {
-            background: #E6BD37;
-            color: #000;
-            padding: 15px 40px;
-            border: none;
-            border-radius: 4px;
-            font-weight: bold;
-            text-decoration: none;
-            display: inline-block;
-        }
-
-        .btn-shopping:hover {
-            background: #d9aa2f;
-        }
-
-        form {
-            margin: 0;
-        }
-
-        .update-cart-btn {
-            background: #333;
-            color: #fff;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 0.9em;
-            transition: background 0.3s;
-            display: inline-block;
-            margin-top: 10px;
-        }
-
-        .update-cart-btn:hover {
-            background: #555;
-        }
-
-        .coupon-section {
-            margin-top: 20px;
-            padding-top: 20px;
-            border-top: 1px solid #eee;
-        }
-
-        .coupon-form {
-            display: flex;
             gap: 10px;
         }
-
-        .coupon-input {
-            flex: 1;
-            padding: 10px;
-            border: 1px solid #ddd;
+        .cart-item-quantity input {
+            width: 50px;
+            padding: 8px;
+            border: 1px solid #ccc;
             border-radius: 4px;
+            text-align: center;
+            font-size: 14px;
         }
-
-        .coupon-btn {
-            background: #333;
-            color: #fff;
+        .cart-item-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            text-align: right;
+        }
+        .cart-item-remove-btn {
+            background: none;
             border: none;
-            padding: 10px 20px;
+            color: #dc3545;
+            cursor: pointer;
+            font-size: 14px;
+            text-decoration: underline;
+            padding: 0;
+        }
+        .cart-item-remove-btn:hover {
+            color: #c82333;
+        }
+        .cart-summary {
+            margin-top: 30px;
+            border-top: 1px solid #eee;
+            padding-top: 20px;
+            text-align: right;
+            font-size: 20px;
+            font-weight: bold;
+        }
+        .cart-total {
+            margin-bottom: 20px;
+        }
+        .checkout-btn {
+            background: black;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-weight: bold;
             border-radius: 4px;
             cursor: pointer;
+            transition: background-color 0.3s ease;
+            width: 100%;
+            font-size: 18px;
         }
-
-        .coupon-error {
-            color: #d9534f;
-            margin-top: 10px;
-            font-size: 0.9em;
+        .checkout-btn:hover {
+            background-color: #E6BD37;
         }
-
-        .coupon-success {
-            color: #5cb85c;
-            margin-top: 10px;
-            font-size: 0.9em;
+        .empty-cart-message {
+            text-align: center;
+            font-size: 18px;
+            color: #777;
+            padding: 50px 0;
         }
-
-        .discount-row {
-            color: #5cb85c;
+        .error-message {
+            color: #dc3545;
+            text-align: center;
+            margin-bottom: 20px;
+            font-weight: bold;
         }
 
         @media (max-width: 768px) {
-            .cart-item {
-                grid-template-columns: 80px 1fr;
-                grid-template-areas: 
-                    "image details"
-                    "price price"
-                    "quantity quantity"
-                    "subtotal remove";
-                gap: 15px;
+            .page-content {
+                padding-top: 220px;
             }
-
-            .item-image {
-                grid-area: image;
+            .cart-container {
+                padding: 20px;
+                margin: 0 15px;
+            }
+            .cart-item {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .cart-item-image {
                 width: 80px;
                 height: 80px;
+                margin-bottom: 10px;
             }
-
-            .item-details {
-                grid-area: details;
+            .cart-item-details {
+                width: 100%;
+                margin-bottom: 10px;
             }
-
-            .item-price {
-                grid-area: price;
+            .cart-item-quantity {
+                justify-content: flex-start;
+                width: 100%;
+                margin-bottom: 10px;
             }
-
-            .item-quantity {
-                grid-area: quantity;
+            .cart-item-actions {
+                width: 100%;
+                flex-direction: row;
+                justify-content: space-between;
             }
-
-            .item-subtotal {
-                grid-area: subtotal;
-            }
-
-            .item-remove {
-                grid-area: remove;
-                text-align: right;
-            }
-
             .cart-summary {
-                grid-template-columns: 1fr;
+                text-align: center;
             }
-            
-            .coupon-form {
-                flex-direction: column;
+            .checkout-btn {
+                font-size: 16px;
+                padding: 12px 20px;
             }
         }
     </style>
 </head>
 <body>
-    <div class="cart-container">
-        <div class="cart-header">
-            <h1 class="cart-title">Your Shopping Cart</h1>
-            <?php if (!empty($cart)): ?>
-                <button class="clear-cart" onclick="if(confirm('Are you sure you want to clear your cart?')) location.href='cart.php?action=clear'">
-                    Clear Cart
-                </button>
+    <div class="page-content">
+        <div class="cart-container">
+            <h1 class="cart-header">Your Shopping Cart</h1>
+
+            <?php if (isset($_SESSION['error'])): ?>
+                <div class="error-message"><?= $_SESSION['error'] ?></div>
+                <?php unset($_SESSION['error']); ?>
+            <?php endif; ?>
+
+            <?php if (!$is_logged_in): ?>
+                <div class="signin-prompt">
+                    <h2>Unlock Your Style Journey! ✨</h2>
+                    <p>
+                        Sign in to Etier to seamlessly manage your cart, track your orders,<br>
+                        and enjoy exclusive access to our latest collections and personalized recommendations.
+                    </p>
+                    <a href="signin.php" class="signin-link">Sign In to Etier</a>
+                </div>
+            <?php elseif (empty($cart_items)): ?>
+                <p class="empty-cart-message">Your cart is empty. Start shopping!</p>
+            <?php else: ?>
+                <?php foreach ($cart_items as $item): ?>
+                    <div class="cart-item">
+                        <img src="../assets/<?= htmlspecialchars($item['image']) ?>" alt="<?= htmlspecialchars($item['name']) ?>" class="cart-item-image">
+                        <div class="cart-item-details">
+                            <div class="cart-item-name"><?= htmlspecialchars($item['name']) ?></div>
+                            <div class="cart-item-size">Size: <?= htmlspecialchars($item['size']) ?></div>
+                            <div class="cart-item-price">₱<?= number_format($item['price'], 2) ?></div>
+                            <form action="cart.php" method="POST" class="cart-item-quantity">
+                                <input type="hidden" name="action" value="update_quantity">
+                                <input type="hidden" name="cart_item_id" value="<?= $item['cart_item_id'] ?>">
+                                Quantity:
+                                <input type="number" name="quantity" value="<?= $item['quantity'] ?>" min="0" onchange="this.form.submit()">
+                            </form>
+                        </div>
+                        <div class="cart-item-actions">
+                            <form action="cart.php" method="POST">
+                                <input type="hidden" name="action" value="remove_item">
+                                <input type="hidden" name="cart_item_id" value="<?= $item['cart_item_id'] ?>">
+                                <button type="submit" class="cart-item-remove-btn">Remove</button>
+                            </form>
+                        </div>
+                    </div>
+                <?php endforeach; ?>
+
+                <div class="cart-summary">
+                    <div class="cart-total">Total: ₱<?= number_format($total_price, 2) ?></div>
+                    <form action="cart.php" method="POST">
+                        <input type="hidden" name="action" value="checkout">
+                        <button type="submit" class="checkout-btn">Proceed to Checkout</button>
+                    </form>
+                </div>
             <?php endif; ?>
         </div>
-
-        <?php if (!empty($cart)): ?>
-            <form method="post" action="cart.php">
-                <div class="cart-items">
-                    <?php foreach ($cart as $id => $item): ?>
-                        <div class="cart-item">
-                            <img src="../assets/<?= $item['image'] ?>" alt="<?= $item['name'] ?>" class="item-image">
-                            <div class="item-details">
-                                <div class="item-name"><?= $item['name'] ?></div>
-                                <div class="item-brand">Etier</div>
-                            </div>
-                            <div class="item-price">₱<?= number_format($item['price'], 2) ?></div>
-                            <div class="item-quantity">
-                                <button type="button" class="quantity-btn minus" data-id="<?= $id ?>">-</button>
-                                <input type="number" name="quantity[<?= $id ?>]" class="quantity-input" value="<?= $item['quantity'] ?>" min="1">
-                                <button type="button" class="quantity-btn plus" data-id="<?= $id ?>">+</button>
-                            </div>
-                            <div class="item-subtotal">₱<?= number_format($item['subtotal'], 2) ?></div>
-                            <button type="button" class="item-remove" onclick="location.href='cart.php?action=remove&id=<?= $id ?>'">
-                                <i class="fas fa-times"></i>
-                            </button>
-                        </div>
-                    <?php endforeach; ?>
-                </div>
-                
-                <button type="submit" name="update_cart" class="update-cart-btn">Update Cart</button>
-            </form>
-
-            <div class="coupon-section">
-                <form method="post" class="coupon-form">
-                    <input type="text" name="coupon_code" class="coupon-input" placeholder="Enter coupon code" required>
-                    <button type="submit" name="apply_coupon" class="coupon-btn">Apply Coupon</button>
-                </form>
-                <?php if (isset($_SESSION['coupon_error'])): ?>
-                    <div class="coupon-error"><?= $_SESSION['coupon_error'] ?></div>
-                    <?php unset($_SESSION['coupon_error']); ?>
-                <?php endif; ?>
-                <?php if (isset($_SESSION['coupon'])): ?>
-                    <div class="coupon-success">10% discount applied!</div>
-                <?php endif; ?>
-            </div>
-
-            <div class="cart-summary">
-                <div class="summary-box">
-                    <h3 class="summary-title">Order Summary</h3>
-                    <div class="summary-row">
-                        <span class="summary-label">Subtotal</span>
-                        <span class="summary-value">₱<?= number_format($subtotal, 2) ?></span>
-                    </div>
-                    <div class="summary-row">
-                        <span class="summary-label">Shipping</span>
-                        <span class="summary-value">Free</span>
-                    </div>
-                    <div class="summary-row">
-                        <span class="summary-label">Tax (12%)</span>
-                        <span class="summary-value">₱<?= number_format($tax, 2) ?></span>
-                    </div>
-                    <?php if (isset($_SESSION['coupon'])): ?>
-                        <div class="summary-row discount-row">
-                            <span class="summary-label">Discount (10%)</span>
-                            <span class="summary-value">-₱<?= number_format($coupon_discount, 2) ?></span>
-                        </div>
-                    <?php endif; ?>
-                    <div class="summary-row summary-total">
-                        <span class="summary-label">Total</span>
-                        <span class="summary-value">₱<?= number_format($grand_total, 2) ?></span>
-                    </div>
-                </div>
-                
-                <div class="summary-box">
-                    <h3 class="summary-title">Checkout</h3>
-                    <a href="store.php" class="btn btn-continue">Continue Shopping</a>
-                    <a href="payment.php" class="btn btn-checkout">Proceed to Checkout</a>
-                    <div style="margin-top: 20px; font-size: 0.9em; color: #777; text-align: center;">
-                        <?php if ($user_id): ?>
-                            <i class="fas fa-check-circle"></i> Your cart is saved to your account
-                        <?php else: ?>
-                            <i class="fas fa-info-circle"></i> <a href="signin.php">Sign in</a> to save your cart
-                        <?php endif; ?>
-                    </div>
-                </div>
-            </div>
-        <?php else: ?>
-            <div class="empty-cart">
-                <div class="empty-cart-icon">
-                    <i class="fas fa-shopping-cart"></i>
-                </div>
-                <div class="empty-cart-message">Your cart is empty</div>
-                <a href="store.php" class="btn-shopping">Continue Shopping</a>
-            </div>
-        <?php endif; ?>
     </div>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            document.querySelectorAll('.quantity-btn.minus').forEach(button => {
-                button.addEventListener('click', function() {
-                    const id = this.getAttribute('data-id');
-                    const input = this.nextElementSibling;
-                    if (parseInt(input.value) > 1) {
-                        input.value = parseInt(input.value) - 1;
-                    }
-                });
-            });
-
-            document.querySelectorAll('.quantity-btn.plus').forEach(button => {
-                button.addEventListener('click', function() {
-                    const id = this.getAttribute('data-id');
-                    const input = this.previousElementSibling;
-                    input.value = parseInt(input.value) + 1;
-                });
-            });
-        });
-    </script>
+    <?php include 'footer.php'; ?>
 </body>
-<footer><?php include 'footer.php'; ?></footer>
 </html>

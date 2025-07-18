@@ -1,3 +1,4 @@
+<?php include 'header.php'; ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -18,7 +19,7 @@
       background: #fff9f9ff;
       color: #333;
       line-height: 1.6;
-      padding-top: 150px;
+      padding-top: 100px;
       margin: 0;
     }
 
@@ -201,7 +202,6 @@
 
 <body>
 
-  <?php include 'header.php'; ?>
 
   <img src="../assets/about_etier_banner.png" alt="About Etier Banner" class="about-banner-image"/>
 

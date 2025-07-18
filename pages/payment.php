@@ -1,386 +1,449 @@
 <?php
 session_start();
 
-if (empty($_SESSION['cart'])) {
-    header("Location: store.php");
-    exit;
+include 'header.php';
+include '../db.php'; // Include your database connection
+
+// Redirect to signin.php if user is not logged in
+if (!isset($_SESSION['user_id'])) {
+    header('Location: signin.php');
+    exit();
 }
 
-$host = 'localhost';
-$db   = 'etierreg';
-$user = 'root';
-$pass = '';
+$user_id = $_SESSION['user_id'];
+$cart_items = []; // This will hold either the cart items or the single buy-now item
+$total_price = 0;
 
-$conn = new mysqli($host, $user, $pass, $db);
-if ($conn->connect_error) die("Connection failed: " . $conn->connect_error);
+// Initialize form variables to prevent "Undefined variable" warnings on first load
+$shipping_address = '';
+$phone_number = '';
+$email_address_for_invoice = '';
+$payment_method = '';
 
-$cart = $_SESSION['cart'];
-$total = 0;
-$subtotal = 0;
-$tax = 0;
-$grand_total = 0;
+// --- Determine if this is a "Buy Now" checkout or regular cart checkout ---
+if (isset($_SESSION['buy_now_item']) && !empty($_SESSION['buy_now_item'])) {
+    // This is a "Buy Now" transaction
+    $buy_now_item = $_SESSION['buy_now_item'];
+    $cart_items[] = $buy_now_item; // Add the single item to the list
+    $total_price = $buy_now_item['price'] * $buy_now_item['quantity'];
+} else {
+    // This is a regular cart checkout
+    // Fetch cart items for the current user to display in the order summary
+    $sql = "SELECT c.id as cart_item_id, p.id as product_id, p.name, p.price, p.image, p.hover_image, c.quantity, c.size
+            FROM cart c
+            JOIN products p ON c.product_id = p.id
+            WHERE c.user_id = ? ORDER BY c.added_at DESC";
+    $stmt = $conn->prepare($sql);
+    if ($stmt === false) {
+        error_log("Payment Page: Prepare failed: (" . $conn->errno . ") " . $conn->error);
+        header('Location: error_page.php?msg=db_error');
+        exit();
+    }
+    $stmt->bind_param("i", $user_id);
+    $stmt->execute();
+    $result = $stmt->get_result();
 
-foreach ($cart as $id => $item) {
-    $subtotal += $item['price'] * $item['quantity'];
-}
-$tax = $subtotal * 0.12;
-$grand_total = $subtotal + $tax;
-
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $card_name = $_POST['card_name'];
-    $card_number = $_POST['card_number'];
-    $expiry = $_POST['expiry'];
-    $cvv = $_POST['cvv'];
-    $email = $_POST['email'];
-    
-    $stmt = $conn->prepare("INSERT INTO orders (card_name, card_number, expiry, cvv, email, amount) VALUES (?, ?, ?, ?, ?, ?)");
-    $stmt->bind_param("sssssd", $card_name, $card_number, $expiry, $cvv, $email, $grand_total);
-    
-    if ($stmt->execute()) {
-        $order_id = $stmt->insert_id;
-        foreach ($cart as $id => $item) {
-            $stmt2 = $conn->prepare("INSERT INTO order_items (order_id, product_id, quantity, price) VALUES (?, ?, ?, ?)");
-            $stmt2->bind_param("iiid", $order_id, $id, $item['quantity'], $item['price']);
-            $stmt2->execute();
-            $stmt2->close();
-        }
-        
-        // 完全复制自 account_info_reg.php 的邮件发送逻辑
-        $to = $email;
-        $subject = "Etier Order Confirmation #$order_id";
-        $body = "<html><body>";
-        $body .= "<h3>Hello $card_name!</h3>";
-        $body .= "<p>Thank you for your order at Etier! Your order number is <strong>#$order_id</strong>.</p>";
-        $body .= "<p>Order Details:</p>";
-        $body .= "<ul>";
-        foreach ($cart as $id => $item) {
-            $body .= "<li>{$item['name']} - Quantity: {$item['quantity']} - Price: ₱".number_format($item['price']*$item['quantity'],2)."</li>";
-        }
-        $body .= "</ul>";
-        $body .= "<p><strong>Total Amount: ₱".number_format($grand_total,2)."</strong></p>";
-        $body .= "<p>We will process your order shortly. If you have any questions, please contact us at etiercustomerservice@gmail.com.</p>";
-        $body .= "</body></html>";
-        
-        $headers = "MIME-Version: 1.0\r\n";
-        $headers .= "Content-type:text/html;charset=UTF-8\r\n";
-        $headers .= "From: Etier <no-reply@etier.com>\r\n";
-
-        if (mail($to, $subject, $body, $headers)) {
-            $_SESSION['order_email'] = true;
-        } else {
-            $_SESSION['order_email'] = false;
-        }
-        
-        $_SESSION['cart'] = [];
-        $_SESSION['order_id'] = $order_id;
-        header("Location: confirmation.php");
-        exit;
+    while ($row = $result->fetch_assoc()) {
+        $cart_items[] = $row;
+        $total_price += $row['price'] * $row['quantity'];
     }
     $stmt->close();
 }
 
-include 'header.php';
+// If no items (neither buy now nor cart), redirect back to cart page or store
+if (empty($cart_items)) {
+    header('Location: cart.php?empty_checkout=true');
+    exit();
+}
+
+// Initialize error messages for specific fields
+$general_error_message = '';
+$shipping_address_error = '';
+$phone_number_error = '';
+$email_error = '';
+$payment_method_error = '';
+
+
+// --- Handle Payment Submission (Form Processing) ---
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'process_payment') {
+    // Get form data
+    $shipping_address = htmlspecialchars(trim($_POST['shipping_address'] ?? ''));
+    $phone_number = htmlspecialchars(trim($_POST['phone_number'] ?? ''));
+    $email_address_for_invoice = htmlspecialchars(trim($_POST['email'] ?? ''));
+    $payment_method = htmlspecialchars(trim($_POST['payment_method'] ?? '')); // Ensure this is initialized from POST data
+
+    // Flag to track overall validation status
+    $is_valid = true;
+
+    // Validate Shipping Address
+    if (empty($shipping_address)) {
+        $shipping_address_error = 'Shipping address is required. ';
+        $is_valid = false;
+    }
+
+    // Validate Phone Number with Regex for Philippines
+    $cleaned_phone_number = preg_replace('/[^0-9+]/', '', $phone_number); // Remove non-numeric chars except '+'
+    $ph_phone_regex = '/^(09|\+639)\d{9}$/'; // Regex for 09xxxxxxxxx or +639xxxxxxxxx
+
+    if (empty($phone_number)) {
+        $phone_number_error = 'Phone number is required. ';
+        $is_valid = false;
+    } elseif (!preg_match($ph_phone_regex, $cleaned_phone_number)) {
+        $phone_number_error = 'Invalid Philippine phone number format. Use 09xxxxxxxxx or +639xxxxxxxxx. ';
+        $is_valid = false;
+    }
+
+    // Validate Email
+    if (empty($email_address_for_invoice)) {
+        $email_error = 'Email address is required. 📧';
+        $is_valid = false;
+    } elseif (!filter_var($email_address_for_invoice, FILTER_VALIDATE_EMAIL)) {
+        $email_error = 'Invalid email address format. ';
+        $is_valid = false;
+    }
+
+    // Validate Payment Method
+    if (empty($payment_method)) {
+        $payment_method_error = 'Please select a payment method. ';
+        $is_valid = false;
+    }
+
+    if ($is_valid) {
+        // If validation passes, proceed with email and order processing
+
+        // --- Send Invoice Email ---
+        $to = $email_address_for_invoice;
+        $subject = "Etier Clothing - Order Confirmation";
+        $message = "Dear Customer,\n\n";
+        $message .= "Thank you for your order with Etier Clothing! Your order details are below.\n\n";
+        $message .= "Order Summary:\n";
+        $message .= "Total Amount: ₱" . number_format($total_price, 2) . "\n";
+        $message .= "Payment Method: " . $payment_method . "\n";
+        $message .= "Shipping Address: " . $shipping_address . "\n";
+        $message .= "Phone Number: " . $phone_number . "\n\n"; // Use original $phone_number for email
+
+        $message .= "Items Ordered:\n";
+        foreach ($cart_items as $item) {
+            $message .= "- " . htmlspecialchars($item['name']) . " (Size: " . htmlspecialchars($item['size']) . ", Qty: " . $item['quantity'] . ") - ₱" . number_format($item['price'] * $item['quantity'], 2) . "\n";
+        }
+        $message .= "\nWe will process your order shortly and send further updates.\n\n";
+        $message .= "Thank you for shopping with Etier!\n";
+        $message .= "Etier Clothing Team\n";
+
+        $headers = "From: no-reply@etier-apparel.my-style.in\r\n";
+        $headers .= "Reply-To: no-reply@etier-apparel.my-style.in\r\n";
+        $headers .= "Content-Type: text/plain; charset=UTF-8\r\n";
+
+        // Attempt to send the email
+        if (!mail($to, $subject, $message, $headers)) {
+            error_log("Failed to send order confirmation email to " . $to . " for user " . $user_id);
+        }
+
+        // --- Clear cart items or buy_now_item after "successful" order placement ---
+        if (isset($_SESSION['buy_now_item'])) {
+            unset($_SESSION['buy_now_item']);
+        } else {
+            $clear_cart_stmt = $conn->prepare("DELETE FROM cart WHERE user_id = ?");
+            if ($clear_cart_stmt === false) {
+                error_log("Payment Page: Clear cart prepare failed: (" . $conn->errno . ") " . $conn->error);
+            } else {
+                $clear_cart_stmt->bind_param("i", $user_id);
+                $clear_cart_stmt->execute();
+                $clear_cart_stmt->close();
+            }
+        }
+
+        // Redirect to order_placed.php
+        if (headers_sent()) {
+            echo '<script>window.location.href = "order_placed.php";</script>';
+        } else {
+            header('Location: order_placed.php');
+        }
+        exit();
+    } 
+    
+}
+
+$conn->close();
 ?>
 
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Payment | Etier</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Checkout | Etier</title>
     <style>
+        /* Your existing CSS */
         body {
             font-family: 'Proxima Nova', sans-serif;
-            background: #fff9f9ff;
+            background-color: #ffffffff;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+        .page-content {
+            flex: 1;
+            padding-top: 130px;
+            padding-bottom: 90px;
+        }
+        .checkout-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            display: flex;
+            flex-wrap: wrap;
+            gap: 30px;
+        }
+        .checkout-header {
+            width: 100%;
+            font-size: 28px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            text-align: center;
             color: #333;
-            padding-top: 200px;
+        }
+        .order-summary-section, .payment-details-section {
+            flex: 1;
+            min-width: 300px;
+        }
+        .section-title {
+            font-size: 22px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            color: #E6BD37;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+        }
+        .order-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px dashed #eee;
+        }
+        .order-item:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+        .order-item-image {
+            width: 60px;
+            height: 60px;
+            object-fit: cover;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+        }
+        .order-item-info {
+            flex-grow: 1;
+        }
+        .order-item-name {
+            font-weight: bold;
+            font-size: 16px;
+        }
+        .order-item-details {
+            font-size: 13px;
+            color: #666;
+        }
+        .order-total-summary {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 2px solid #E6BD37;
+            font-size: 20px;
+            font-weight: bold;
+            text-align: right;
+        }
+        .form-group {
+            margin-bottom: 20px;
+            position: relative; /* Needed for absolute positioning of error message */
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #555;
+        }
+        .form-group input[type="text"],
+        .form-group input[type="email"],
+        .form-group input[type="tel"],
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 16px;
+            box-sizing: border-box;
+            transition: border-color 0.3s ease; /* Smooth transition for border color */
+        }
+        .form-group textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+        /* New CSS for error styling */
+        .form-group.error input,
+        .form-group.error textarea,
+        .form-group.error select {
+            border-color: #dc3545; /* Red border for invalid fields */
+        }
+        .input-error-message {
+            color: #dc3545;
+            font-size: 0.85em;
+            margin-top: 5px;
+            display: block; /* Ensures it takes its own line */
+            font-weight: normal;
         }
 
-        .payment-container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 20px;
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 40px;
+        .payment-options {
+            margin-top: 20px;
+            margin-bottom: 30px;
+        }
+        .payment-option {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .payment-option input[type="radio"] {
+            margin-right: 10px;
+        }
+        .place-order-btn {
+            background: black;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-weight: bold;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            width: 100%;
+            font-size: 18px;
+        }
+        .place-order-btn:hover {
+            background-color: #E6BD37;
+        }
+        .general-error-message { /* Renamed for clarity */
+            color: #dc3545;
+            text-align: center;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+        .email-invoice-note {
+            font-size: 0.9em;
+            color: #888;
+            margin-top: 5px;
+            display: block;
+            font-weight: normal;
         }
 
         @media (max-width: 768px) {
-            .payment-container {
-                grid-template-columns: 1fr;
+            .page-content {
+                padding-top: 100px;
             }
-        }
-
-        .payment-section {
-            background: #fff;
-            border-radius: 8px;
-            padding: 30px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
-        }
-
-        .section-title {
-            font-size: 1.8em;
-            font-weight: bold;
-            color: #E6BD37;
-            margin-bottom: 25px;
-            border-bottom: 1px solid #eee;
-            padding-bottom: 15px;
-        }
-
-        .payment-form label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 500;
-        }
-
-        .payment-form input {
-            width: 100%;
-            padding: 12px;
-            margin-bottom: 20px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            font-size: 1em;
-        }
-
-        .card-group {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-        }
-
-        .order-summary-item {
-            display: flex;
-            justify-content: space-between;
-            padding: 15px 0;
-            border-bottom: 1px solid #eee;
-        }
-
-        .order-summary-item:last-child {
-            border-bottom: none;
-        }
-
-        .item-image {
-            width: 70px;
-            height: 70px;
-            object-fit: cover;
-            border-radius: 4px;
-        }
-
-        .item-details {
-            flex: 1;
-            padding: 0 15px;
-        }
-
-        .item-name {
-            font-weight: bold;
-            font-size: 1em;
-            margin-bottom: 5px;
-        }
-
-        .item-price {
-            color: #555;
-        }
-
-        .item-quantity {
-            color: #777;
-        }
-
-        .order-totals {
-            margin-top: 20px;
-            padding-top: 20px;
-            border-top: 1px solid #eee;
-        }
-
-        .total-row {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 10px;
-        }
-
-        .total-label {
-            color: #555;
-        }
-
-        .total-value {
-            font-weight: bold;
-        }
-
-        .grand-total {
-            font-size: 1.2em;
-            margin-top: 15px;
-            padding-top: 15px;
-            border-top: 1px solid #eee;
-        }
-
-        .btn-pay {
-            background: #E6BD37;
-            color: #000;
-            border: none;
-            padding: 15px;
-            font-size: 1.1em;
-            font-weight: bold;
-            border-radius: 4px;
-            cursor: pointer;
-            width: 100%;
-            margin-top: 20px;
-            transition: background 0.3s;
-        }
-
-        .btn-pay:hover {
-            background: #d9aa2f;
-        }
-
-        .payment-methods {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 10px;
-            margin-top: 20px;
-        }
-
-        .payment-method {
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            padding: 10px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-
-        .payment-method.active {
-            border-color: #E6BD37;
-            background: rgba(230, 189, 55, 0.1);
-        }
-
-        .payment-method img {
-            max-width: 50px;
-            height: auto;
+            .checkout-container {
+                flex-direction: column;
+                padding: 20px; /* Adjusted padding for better spacing */
+                margin: 0 15px;
+            }
+            .order-summary-section, .payment-details-section {
+                min-width: unset;
+                width: 100%;
+            }
+            .section-title {
+                text-align: center;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="payment-container">
-        <div class="payment-section">
-            <h2 class="section-title">Payment Information</h2>
-            <form method="post" class="payment-form">
-                <div class="card-group">
-                    <div>
-                        <label for="card_name">Cardholder Name</label>
-                        <input type="text" id="card_name" name="card_name" required>
+    <div class="page-content">
+        <div class="checkout-container">
+            <h1 class="checkout-header">Checkout</h1>
+
+            <?php
+            // Display general error message if set
+            if (!empty($general_error_message)) {
+                echo '<p class="general-error-message">' . htmlspecialchars($general_error_message) . '</p>';
+            }
+            ?>
+
+            <div class="order-summary-section">
+                <h2 class="section-title">Order Summary</h2>
+                <?php if (empty($cart_items)): ?>
+                    <p class="empty-cart-message" style="text-align: left; font-size: 1em; color: #555;">No items to display for checkout.</p>
+                <?php else: ?>
+                    <?php foreach ($cart_items as $item): ?>
+                        <div class="order-item">
+                            <img src="../assets/<?= htmlspecialchars($item['image']) ?>" alt="<?= htmlspecialchars($item['name']) ?>" class="order-item-image">
+                            <div class="order-item-info">
+                                <div class="order-item-name"><?= htmlspecialchars($item['name']) ?></div>
+                                <div class="order-item-details">
+                                    Quantity: <?= $item['quantity'] ?> | Size: <?= htmlspecialchars($item['size']) ?> | ₱<?= number_format($item['price'], 2) ?> each
+                                </div>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                    <div class="order-total-summary">
+                        Total: ₱<?= number_format($total_price, 2) ?>
                     </div>
-                    <div>
-                        <label for="card_number">Card Number</label>
-                        <input type="text" id="card_number" name="card_number" placeholder="XXXX XXXX XXXX XXXX" required>
+                <?php endif; ?>
+            </div>
+
+            <div class="payment-details-section">
+                <h2 class="section-title">Shipping & Payment</h2>
+                <form action="payment.php" method="POST">
+                    <input type="hidden" name="action" value="process_payment">
+
+                    <div class="form-group <?= !empty($shipping_address_error) ? 'error' : '' ?>">
+                        <label for="shipping_address">Shipping Address:</label>
+                        <textarea id="shipping_address" name="shipping_address" rows="3" required placeholder="Enter your full shipping address"><?= htmlspecialchars($shipping_address) ?></textarea>
+                        <?php if (!empty($shipping_address_error)): ?>
+                            <span class="input-error-message"><?= $shipping_address_error ?></span>
+                        <?php endif; ?>
                     </div>
-                </div>
-                
-                <div class="card-group">
-                    <div>
-                        <label for="expiry">Expiry Date</label>
-                        <input type="text" id="expiry" name="expiry" placeholder="MM/YY" required>
+
+                    <div class="form-group <?= !empty($phone_number_error) ? 'error' : '' ?>">
+                        <label for="phone_number">Phone Number:</label>
+                        <input type="tel" id="phone_number" name="phone_number" value="<?= htmlspecialchars($phone_number) ?>" required placeholder="+639xxxxxxxxx or 09xxxxxxxxx">
+                        <?php if (!empty($phone_number_error)): ?>
+                            <span class="input-error-message"><?= $phone_number_error ?></span>
+                        <?php endif; ?>
                     </div>
-                    <div>
-                        <label for="cvv">CVV</label>
-                        <input type="text" id="cvv" name="cvv" placeholder="123" required>
+
+                    <div class="form-group <?= !empty($email_error) ? 'error' : '' ?>">
+                        <label for="email">Email Address:</label>
+                        <input type="email" id="email" name="email" value="<?= htmlspecialchars($email_address_for_invoice) ?>" required placeholder="your.email@example.com">
+                        <small class="email-invoice-note">Your invoice and order updates will be sent to this email address.</small>
+                        <?php if (!empty($email_error)): ?>
+                            <span class="input-error-message"><?= $email_error ?></span>
+                        <?php endif; ?>
                     </div>
-                </div>
-                
-                <label for="email">Email for Order Confirmation</label>
-                <input type="email" id="email" name="email" required value="<?= isset($_SESSION['user_email']) ? $_SESSION['user_email'] : '' ?>">
-                
-                <h3 style="margin-top: 20px; margin-bottom: 15px;">Payment Method</h3>
-                <div class="payment-methods">
-                    <div class="payment-method active">
-                        <img src="../assets/visa.png" alt="Visa">
+
+                    <div class="form-group <?= !empty($payment_method_error) ? 'error' : '' ?>">
+                        <label for="payment_method_select">Payment Method:</label>
+                        <select id="payment_method_select" name="payment_method" required>
+                            <option value="">Select a method</option>
+                            <option value="Credit Card" <?= ($payment_method === 'Credit Card' ? 'selected' : '') ?>>Credit Card</option>
+                            <option value="GCash" <?= ($payment_method === 'GCash' ? 'selected' : '') ?>>GCash</option>
+                            <option value="Bank Transfer" <?= ($payment_method === 'Bank Transfer' ? 'selected' : '') ?>>Bank Transfer</option>
+                            <option value="Cash on Delivery" <?= ($payment_method === 'Cash on Delivery' ? 'selected' : '') ?>>Cash on Delivery (COD)</option>
+                        </select>
+                        <?php if (!empty($payment_method_error)): ?>
+                            <span class="input-error-message"><?= $payment_method_error ?></span>
+                        <?php endif; ?>
                     </div>
-                    <div class="payment-method">
-                        <img src="../assets/mastercard.png" alt="Mastercard">
-                    </div>
-                    <div class="payment-method">
-                        <img src="../assets/amex.png" alt="American Express">
-                    </div>
-                    <div class="payment-method">
-                        <img src="../assets/paypal.png" alt="PayPal">
-                    </div>
-                </div>
-                
-                <button type="submit" class="btn-pay">Pay ₱<?= number_format($grand_total, 2) ?></button>
-            </form>
-        </div>
-        
-        <div class="payment-section">
-            <h2 class="section-title">Order Summary</h2>
-            
-            <?php foreach ($cart as $id => $item): ?>
-                <div class="order-summary-item">
-                    <img src="../assets/<?= $item['image'] ?>" alt="<?= $item['name'] ?>" class="item-image">
-                    <div class="item-details">
-                        <div class="item-name"><?= $item['name'] ?></div>
-                        <div class="item-price">₱<?= number_format($item['price'], 2) ?></div>
-                    </div>
-                    <div class="item-quantity">
-                        x <?= $item['quantity'] ?>
-                    </div>
-                    <div class="item-subtotal">
-                        ₱<?= number_format($item['subtotal'], 2) ?>
-                    </div>
-                </div>
-            <?php endforeach; ?>
-            
-            <div class="order-totals">
-                <div class="total-row">
-                    <span class="total-label">Subtotal</span>
-                    <span class="total-value">₱<?= number_format($subtotal, 2) ?></span>
-                </div>
-                <div class="total-row">
-                    <span class="total-label">Shipping</span>
-                    <span class="total-value">Free</span>
-                </div>
-                <div class="total-row">
-                    <span class="total-label">Tax (12%)</span>
-                    <span class="total-value">₱<?= number_format($tax, 2) ?></span>
-                </div>
-                <div class="total-row grand-total">
-                    <span class="total-label">Total</span>
-                    <span class="total-value">₱<?= number_format($grand_total, 2) ?></span>
-                </div>
+
+                    <button type="submit" class="place-order-btn">Place Order</button>
+                </form>
             </div>
         </div>
     </div>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const paymentMethods = document.querySelectorAll('.payment-method');
-            paymentMethods.forEach(method => {
-                method.addEventListener('click', function() {
-                    paymentMethods.forEach(m => m.classList.remove('active'));
-                    this.classList.add('active');
-                });
-            });
-            
-            document.getElementById('card_number').addEventListener('input', function(e) {
-                let value = e.target.value.replace(/\s+/g, '').replace(/[^0-9]/gi, '');
-                let formatted = '';
-                
-                for (let i = 0; i < value.length; i++) {
-                    if (i > 0 && i % 4 === 0) formatted += ' ';
-                    formatted += value[i];
-                }
-                
-                e.target.value = formatted;
-            });
-            
-            document.getElementById('expiry').addEventListener('input', function(e) {
-                let value = e.target.value.replace(/\s+/g, '').replace(/[^0-9]/gi, '');
-                let formatted = '';
-                
-                for (let i = 0; i < value.length; i++) {
-                    if (i === 2) formatted += '/';
-                    formatted += value[i];
-                }
-                
-                e.target.value = formatted;
-            });
-        });
-    </script>
+    <?php include 'footer.php'; ?>
 </body>
-<footer><?php include 'footer.php'; ?></footer>
 </html>

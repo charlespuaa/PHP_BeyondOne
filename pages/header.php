@@ -1,5 +1,15 @@
 <?php
-  $currentPage = basename($_SERVER['PHP_SELF']);
+// Start the session if it hasn't been started already.
+// This is crucial for header.php to correctly access $_SESSION variables
+// on any page it's included, including after redirects.
+if (session_status() == PHP_SESSION_NONE) {
+    session_start();
+}
+
+$currentPage = basename($_SERVER['PHP_SELF']);
+
+// Assume you have a way to determine if a user is logged in, e.g., a session variable
+$isLoggedIn = isset($_SESSION['user_id']); // Check if a 'user_id' session variable exists
 ?>
 
 <header class="etier-header">
@@ -27,32 +37,76 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 7px 20px;
+      padding: 8px 20px;
       font-size: 13px;
-      border-bottom: 1px solid #eee;
+      background: #000;
+      border-bottom: 1px solid #333;
       flex-wrap: nowrap;
-      white-space: nowrap;
       overflow: hidden;
+      position: relative;
     }
 
     .etier-header .top-bar-left {
       font-weight: 700;
       font-size: 16px;
-      color: #000;
+      color: #FFF;
       flex-shrink: 1;
+      z-index: 10;
+      padding-left: 10px;
+    }
+
+    .etier-header .top-bar-left a {
+      color: #FFF;
+      text-decoration: none;
+      font-weight: bold;
+    }
+
+    .etier-header .rotating-text-container {
+        position: absolute;
+        left: 0;
+        right: 0;
+        text-align: center;
+        overflow: hidden;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        pointer-events: none;
+        z-index: 5;
+    }
+
+    .etier-header .rotating-text-item {
+        color: #FFF;
+        font-size: 14px;
+        font-weight: 500;
+        opacity: 0;
+        position: absolute;
+        transition: opacity 0.5s ease-in-out;
+        white-space: nowrap;
+        letter-spacing: 1px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+    }
+
+    .etier-header .rotating-text-item.active {
+        opacity: 1;
     }
 
     .etier-header .top-bar-right {
       display: flex;
-      gap: 12px;
+      gap: 10px;
       font-size: 15px;
       flex-shrink: 1;
+      z-index: 10;
+      padding-right: 10px;
     }
 
     .etier-header .top-bar-right a {
-      color: #000;
+      color: #FFF;
+      font-weight: 400;
       text-decoration: none;
-      font-weight: 500;
     }
 
     .etier-header .top-bar-right a:hover {
@@ -71,7 +125,7 @@
       font-size: 24px;
       cursor: pointer;
       color: #000;
-      display: none;
+      display: none; /* Hidden by default on desktop, shown by media query */
       grid-column: 1;
       justify-self: start;
     }
@@ -105,6 +159,7 @@
       font-size: 22px;
       color: #000;
       text-decoration: none;
+      padding-right: 10px;
     }
 
     .etier-header .top-right a:hover {
@@ -148,31 +203,26 @@
       cursor: default;
     }
 
-    .etier-header .signin-link {
-      border: 2px solid #E6BD37;
-      padding: 2px 6px;
-      border-radius: 5px;
-      background: #fff;
-      transition: background-color 0.3s, color 0.3s, border-color 0.3s;
-      font-weight: 500;
-      display: inline-block;
-      line-height: 1;
-    }
-
-    <?php if ($currentPage === 'signin.php'): ?>
+    <?php if ($currentPage === 'signin.php' && !$isLoggedIn): // Apply only if on signin.php and not logged in ?>
       .etier-header .top-bar-right a[href="signin.php"] {
+        color: #e6bd37;
+        font-weight: bold;
+        text-decoration: underline;
+      }
+    <?php elseif ($isLoggedIn && ($currentPage === 'profile.php' || $currentPage === 'my_profile.php')): // Apply if logged in and on profile or my_profile page ?>
+      .etier-header .top-bar-right a[href="profile.php"], /* Adjust if you use my_profile.php directly */
+      .etier-header .top-bar-right a[href="my_profile.php"] { /* Keeping both for flexibility */
         color: #e6bd37;
         font-weight: bold;
         text-decoration: underline;
       }
     <?php endif; ?>
 
+    /* responsive styles */
     @media (max-width: 768px) {
       .etier-header .top-bar {
-        flex-wrap: nowrap;
-        padding: 7px 12px;
-        gap: 10px;
-        font-size: 12px;
+        padding: 7px 10px;
+        gap: 8px;
       }
 
       .etier-header .top-bar-left {
@@ -181,17 +231,27 @@
       }
 
       .etier-header .top-bar-right {
-        flex-direction: row;
-        gap: 10px;
+        gap: 8px;
+        font-size: 14px;
         flex-shrink: 0;
       }
-
       .etier-header .top-bar-right a {
-        font-size: 13px;
+          font-size: 12px;
       }
 
+      .etier-header .rotating-text-item {
+          font-size: 11px;
+          letter-spacing: 0.3px;
+          white-space: normal;
+          line-height: 1.3;
+          text-overflow: ellipsis;
+          overflow: hidden;
+          max-height: 100%;
+      }
+
+      /* This rule will only apply if menu-toggle is present in HTML */
       .etier-header .menu-toggle {
-        display: block;
+        display: block; /* Shown on mobile */
       }
 
       .etier-header .logo img {
@@ -239,19 +299,24 @@
 
     @media (max-width: 480px) {
       .etier-header .top-bar {
-        font-size: 11px;
+        padding: 5px 8px;
+        gap: 5px;
       }
 
       .etier-header .top-bar-left {
-        font-size: 13px;
+        font-size: 12px;
       }
 
       .etier-header .top-bar-right {
-        gap: 8px;
+        gap: 5px;
+      }
+      .etier-header .top-bar-right a {
+          font-size: 10px;
       }
 
-      .etier-header .top-bar-right a {
-        font-size: 12px;
+      .etier-header .rotating-text-item {
+          font-size: 9px;
+          letter-spacing: 0.1px;
       }
 
       .etier-header .logo img {
@@ -265,29 +330,49 @@
   </style>
 
   <div class="top-bar">
-    <div class="top-bar-left">ETIER</div>
+    <div class="top-bar-left">
+        <a href="store.php">ETIER</a>
+    </div>
+
+    <div class="rotating-text-container" id="rotatingTextContainer">
+      <div class="rotating-text-item">FREE SHIPPING FOR ETIER MEMBERS</div>
+      <div class="rotating-text-item">GET 10% OFF YOUR FIRST ORDER</div>
+      <div class="rotating-text-item">LUXURY YOU CAN AFFORD</div>
+      <div class="rotating-text-item">NEW ARRIVALS EVERY FRIDAY</div>
+    </div>
+
     <div class="top-bar-right">
-      <a href="about_us.php">ABOUT US &nbsp;</a>
-      <a href="signin.php" class="signin-link">SIGN IN</a>
-      </div>          
+      <a href="about_us.php">ABOUT US</a>
+      <?php if ($isLoggedIn): ?>
+        <a href="profile.php">MY PROFILE</a> <?php else: ?>
+        <a href="signin.php">SIGN IN</a>
+      <?php endif; ?>
     </div>
   </div>
 
   <div class="top-nav">
-    <div class="menu-toggle" id="menuToggle">
-      <i class="fas fa-bars"></i>
-    </div>
+    <?php
+    // Define pages where menu-toggle and main-nav should NOT appear
+    $noNavPages = ['about_us.php', 'signin.php', 'account_info_reg.php', 'personal_info_reg.php', 'address_info_reg.php', 'payment.php', 'profile.php', 'about_us.php', 'cart.php']; 
+    $showNavAndHamburger = !in_array($currentPage, $noNavPages);
+    ?>
+
+    <?php if ($showNavAndHamburger): // Only show menu toggle if navigation is needed ?>
+      <div class="menu-toggle" id="menuToggle">
+        <i class="fas fa-bars"></i>
+      </div>
+    <?php endif; ?>
+
     <div class="logo">
       <a href="store.php">
         <img src="../assets/etier_logo_transparent.png" alt="etier logo" />
       </a>
     </div>
     <div class="top-right">
-      <a href="#"><i class="fas fa-shopping-bag"></i></a>
-    </div>
+      <a href="cart.php"><i class="fas fa-shopping-bag"></i></a> </div>
   </div>
 
-  <?php if ($currentPage !== 'about_us.php' && $currentPage !== 'signin.php'): ?>
+  <?php if ($showNavAndHamburger): // Only show main navigation if needed ?>
     <nav class="main-nav" id="mainNav">
       <?php
         $categories = [
@@ -305,10 +390,14 @@
         $isProductPage = $currentPage === 'product.php';
 
         foreach ($categories as $key => $label) {
+          // Changed to check if the current page is 'product.php' AND 'activeCategory' is set and matches
+          // This ensures the 'active' class is correctly applied based on product category
           if ($isProductPage && isset($activeCategory) && $activeCategory === $key) {
             echo "<span class='active'>$label</span>";
           } else {
-            echo "<a href='#$key' " . (isset($activeCategory) && $activeCategory === $key ? "class='active'" : "") . ">$label</a>";
+            // For general navigation, check if the current page is 'store.php' and the link's hash matches 'current' category from JS
+            // This part might need more robust PHP logic if you want to highlight categories dynamically based on store sections
+            echo "<a href='#$key'>" . $label . "</a>"; // Removed the dynamic active class for non-product pages here as it's handled by JS
           }
         }
       ?>
@@ -328,6 +417,7 @@
     const menuToggle = document.getElementById('menuToggle');
     const mainNav = document.getElementById('mainNav');
 
+    // Only add event listener if menuToggle and mainNav exist (i.e., not on pages where they are removed by PHP)
     if (menuToggle && mainNav) {
       menuToggle.addEventListener('click', () => {
         mainNav.classList.toggle('active');
@@ -339,8 +429,12 @@
 
     navLinks.forEach(link => {
       link.addEventListener('click', function () {
-        navLinks.forEach(l => l.classList.remove('active'));
-        this.classList.add('active');
+        // Only remove active class from other links if on store.php and section navigation is relevant
+        if ('<?= $currentPage ?>' === 'store.php') {
+            navLinks.forEach(l => l.classList.remove('active'));
+            this.classList.add('active');
+        }
+        
         if (mainNav && mainNav.classList.contains('active')) {
           mainNav.classList.remove('active');
           const icon = menuToggle.querySelector('i');
@@ -350,25 +444,50 @@
       });
     });
 
-    window.addEventListener('scroll', () => {
-      let current = '';
-      sections.forEach(section => {
-        const el = document.getElementById(section);
-        if (el) {
-          const sectionTop = el.offsetTop - 150;
-          if (scrollY >= sectionTop) {
-            current = section;
-          }
-        }
-      });
+    // Only apply scroll logic if on store.php
+    if ('<?= $currentPage ?>' === 'store.php') {
+        window.addEventListener('scroll', () => {
+            let current = '';
+            sections.forEach(section => {
+                const el = document.getElementById(section);
+                if (el) {
+                    const sectionTop = el.offsetTop - 150; // Offset for fixed header
+                    // Use a small buffer to ensure the correct section is highlighted when entering its view
+                    if (scrollY >= sectionTop && scrollY < el.offsetTop + el.offsetHeight - 150) { 
+                        current = section;
+                    }
+                }
+            });
 
-      navLinks.forEach(link => {
-        link.classList.remove('active');
-        if (link.getAttribute('href') === '#' + current) {
-          link.classList.add('active');
-        }
-      });
-    });
+            navLinks.forEach(link => {
+                link.classList.remove('active');
+                if (link.getAttribute('href') === '#' + current) {
+                    link.classList.add('active');
+                }
+            });
+        });
+    }
+
+
+    // New: JavaScript for Rotating Text
+    const rotatingTextItems = document.querySelectorAll('.rotating-text-item');
+    let currentTextIndex = 0;
+
+    function showNextText() {
+        if (rotatingTextItems.length === 0) return; // Prevent error if no items
+
+        rotatingTextItems[currentTextIndex].classList.remove('active');
+        currentTextIndex = (currentTextIndex + 1) % rotatingTextItems.length;
+        rotatingTextItems[currentTextIndex].classList.add('active');
+    }
+
+    // Initialize: show the first text
+    if (rotatingTextItems.length > 0) {
+        rotatingTextItems[0].classList.add('active');
+    }
+
+    // Start rotation
+    setInterval(showNextText, 2000);
   });
 </script>
 <?php endif; ?>
