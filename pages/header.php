@@ -1,12 +1,15 @@
 <?php
-  $currentPage = basename($_SERVER['PHP_SELF']);
+
+$currentPage = basename($_SERVER['PHP_SELF']);
+
+// Assume you have a way to determine if a user is logged in, e.g., a session variable
+$isLoggedIn = isset($_SESSION['user_id']); // Check if a 'user_id' session variable exists
 ?>
 
 <header class="etier-header">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
 
   <style>
-  
     .etier-header *, .etier-header *::before, .etier-header *::after {
       box-sizing: border-box;
       margin: 0;
@@ -110,8 +113,6 @@
       align-items: center;
       padding: 10px 20px;
       border-top: 1px solid #eee;
-      /* Removed this line as it seemed misplaced and could affect layout */
-      /* transition: max-height 0.4s ease, padding 0.4s ease; */
     }
 
     .etier-header .menu-toggle {
@@ -195,9 +196,15 @@
     .etier-header .main-nav span {
       cursor: default;
     }
-      
-    <?php if ($currentPage === 'signin.php'): ?>
+
+    <?php if ($currentPage === 'signin.php' && !$isLoggedIn): // Apply only if on signin.php and not logged in ?>
       .etier-header .top-bar-right a[href="signin.php"] {
+        color: #e6bd37;
+        font-weight: bold;
+        text-decoration: underline;
+      }
+    <?php elseif ($isLoggedIn && $currentPage === 'my_profile.php'): // Apply if logged in and on my_profile.php ?>
+      .etier-header .top-bar-right a[href="my_profile.php"] {
         color: #e6bd37;
         font-weight: bold;
         text-decoration: underline;
@@ -329,14 +336,18 @@
 
     <div class="top-bar-right">
       <a href="about_us.php">ABOUT US</a>
-      <a href="signin.php">SIGN IN</a>
+      <?php if ($isLoggedIn): ?>
+        <a href="profile.php">MY PROFILE</a>
+      <?php else: ?>
+        <a href="signin.php">SIGN IN</a>
+      <?php endif; ?>
     </div>
   </div>
 
   <div class="top-nav">
     <?php
     // Define pages where menu-toggle and main-nav should NOT appear
-    $noNavPages = ['about_us.php', 'signin.php', 'account_info_reg.php', 'personal_info_reg.php', 'address_info_reg.php', 'payment.php'];
+    $noNavPages = ['about_us.php', 'signin.php', 'account_info_reg.php', 'personal_info_reg.php', 'address_info_reg.php', 'payment.php', 'my_profile.php']; // Add 'my_profile.php' here
     $showNavAndHamburger = !in_array($currentPage, $noNavPages);
     ?>
 

@@ -1,5 +1,5 @@
 <?php
-include 'header.php';
+
 
 $first_name = $_POST['first_name'] ?? '';
 $middle_name = $_POST['middle_name'] ?? '';
@@ -104,7 +104,8 @@ $contact_number = $_POST['contact_number'] ?? '';
         
         }
     </style>
-</head>
+    <?php include 'header.php'; ?>
+ </head>
 <body>
 <h1>Registration</h1>
 <form method="post" action="address_info_reg.php">
