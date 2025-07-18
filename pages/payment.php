@@ -1,8 +1,8 @@
-<?php include 'header.php';
-?>
 <?php
-// No need for session_start() here, as it's handled by header.php
-include '../db.php'; // Include your database connection (still needed for cart items)
+session_start();
+
+include 'header.php';
+include '../db.php'; // Include your database connection
 
 // Redirect to signin.php if user is not logged in
 if (!isset($_SESSION['user_id'])) {
@@ -11,85 +11,157 @@ if (!isset($_SESSION['user_id'])) {
 }
 
 $user_id = $_SESSION['user_id'];
-$cart_items = [];
+$cart_items = []; // This will hold either the cart items or the single buy-now item
 $total_price = 0;
 
-// Fetch cart items for the current user to display in the order summary
-$sql = "SELECT c.id as cart_item_id, p.id as product_id, p.name, p.price, p.image, p.hover_image, c.quantity, c.size
-        FROM cart c
-        JOIN products p ON c.product_id = p.id
-        WHERE c.user_id = ? ORDER BY c.added_at DESC";
-$stmt = $conn->prepare($sql);
-$stmt->bind_param("i", $user_id);
-$stmt->execute();
-$result = $stmt->get_result();
+// Initialize form variables to prevent "Undefined variable" warnings on first load
+$shipping_address = '';
+$phone_number = '';
+$email_address_for_invoice = '';
+$payment_method = '';
 
-while ($row = $result->fetch_assoc()) {
-    $cart_items[] = $row;
-    $total_price += $row['price'] * $row['quantity'];
+// --- Determine if this is a "Buy Now" checkout or regular cart checkout ---
+if (isset($_SESSION['buy_now_item']) && !empty($_SESSION['buy_now_item'])) {
+    // This is a "Buy Now" transaction
+    $buy_now_item = $_SESSION['buy_now_item'];
+    $cart_items[] = $buy_now_item; // Add the single item to the list
+    $total_price = $buy_now_item['price'] * $buy_now_item['quantity'];
+} else {
+    // This is a regular cart checkout
+    // Fetch cart items for the current user to display in the order summary
+    $sql = "SELECT c.id as cart_item_id, p.id as product_id, p.name, p.price, p.image, p.hover_image, c.quantity, c.size
+            FROM cart c
+            JOIN products p ON c.product_id = p.id
+            WHERE c.user_id = ? ORDER BY c.added_at DESC";
+    $stmt = $conn->prepare($sql);
+    if ($stmt === false) {
+        error_log("Payment Page: Prepare failed: (" . $conn->errno . ") " . $conn->error);
+        header('Location: error_page.php?msg=db_error');
+        exit();
+    }
+    $stmt->bind_param("i", $user_id);
+    $stmt->execute();
+    $result = $stmt->get_result();
+
+    while ($row = $result->fetch_assoc()) {
+        $cart_items[] = $row;
+        $total_price += $row['price'] * $row['quantity'];
+    }
+    $stmt->close();
 }
-$stmt->close();
 
-// If cart is empty, redirect back to cart page or store
-if (empty($cart_items)) { 
-    header('Location: cart.php');
+// If no items (neither buy now nor cart), redirect back to cart page or store
+if (empty($cart_items)) {
+    header('Location: cart.php?empty_checkout=true');
     exit();
 }
+
+// Initialize error messages for specific fields
+$general_error_message = '';
+$shipping_address_error = '';
+$phone_number_error = '';
+$email_error = '';
+$payment_method_error = '';
+
 
 // --- Handle Payment Submission (Form Processing) ---
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'process_payment') {
     // Get form data
-    $shipping_address = htmlspecialchars($_POST['shipping_address'] ?? '');
-    $phone_number = htmlspecialchars($_POST['phone_number'] ?? '');
-    $email_address_for_invoice = htmlspecialchars($_POST['email'] ?? '');
-    $payment_method = htmlspecialchars($_POST['payment_method'] ?? 'Credit Card');
+    $shipping_address = htmlspecialchars(trim($_POST['shipping_address'] ?? ''));
+    $phone_number = htmlspecialchars(trim($_POST['phone_number'] ?? ''));
+    $email_address_for_invoice = htmlspecialchars(trim($_POST['email'] ?? ''));
+    $payment_method = htmlspecialchars(trim($_POST['payment_method'] ?? '')); // Ensure this is initialized from POST data
 
-    // In this simplified version, we just proceed to email sending and confirmation.
-    // No database transactions for orders or stock management.
+    // Flag to track overall validation status
+    $is_valid = true;
 
-    // --- Send Invoice Email ---
-    $to = $email_address_for_invoice;
-    $subject = "Etier Clothing - Order Confirmation"; // No order ID from DB in this simplified version
-
-    $message = "Dear Customer,\n\n";
-    $message .= "Thank you for your order with Etier Clothing! Your order details are below.\n\n";
-    $message .= "Order Summary:\n";
-    $message .= "Total Amount: ₱" . number_format($total_price, 2) . "\n";
-    $message .= "Payment Method: " . $payment_method . "\n";
-    $message .= "Shipping Address: " . $shipping_address . "\n";
-    $message .= "Phone Number: " . $phone_number . "\n\n";
-
-    $message .= "Items Ordered:\n";
-    foreach ($cart_items as $item) {
-        $message .= "- " . $item['name'] . " (Size: " . $item['size'] . ", Qty: " . $item['quantity'] . ") - ₱" . number_format($item['price'] * $item['quantity'], 2) . "\n";
-    }
-    $message .= "\nWe will process your order shortly and send further updates.\n\n";
-    $message .= "Thank you for shopping with Etier!\n";
-    $message .= "Etier Clothing Team\n";
-
-    $headers = "From: no-reply@etier-apparel.my-style.in\r\n"; // IMPORTANT: Replace with your actual domain's email address
-    $headers .= "Reply-To: no-reply@etier-apparel.my-style.in\r\n"; // IMPORTANT: Replace with your actual domain's email address
-    $headers .= "Content-Type: text/plain; charset=UTF-8\r\n";
-
-    // Attempt to send the email
-    // Note: Free hosting providers like InfinityFree may have restrictions or disable PHP's mail() function.
-    // For reliable email delivery in a production environment, consider using an SMTP service (e.g., SendGrid, Mailgun)
-    // with a library like PHPMailer.
-    if (!mail($to, $subject, $message, $headers)) {
-        error_log("Failed to send order confirmation email to " . $to);
-        // You might want to display a message to the user that email sending failed
-        // For this simplified version, we'll proceed to the confirmation page regardless.
+    // Validate Shipping Address
+    if (empty($shipping_address)) {
+        $shipping_address_error = 'Shipping address is required. ';
+        $is_valid = false;
     }
 
-    // Optionally, clear the cart after "successful" order placement
-    $clear_cart_stmt = $conn->prepare("DELETE FROM cart WHERE user_id = ?");
-    $clear_cart_stmt->bind_param("i", $user_id);
-    $clear_cart_stmt->execute();
-    $clear_cart_stmt->close();
+    // Validate Phone Number with Regex for Philippines
+    $cleaned_phone_number = preg_replace('/[^0-9+]/', '', $phone_number); // Remove non-numeric chars except '+'
+    $ph_phone_regex = '/^(09|\+639)\d{9}$/'; // Regex for 09xxxxxxxxx or +639xxxxxxxxx
 
-    // Redirect to order placed confirmation page
-    header('Location: order_placed.php'); // You'll need to create this page
-    exit();
+    if (empty($phone_number)) {
+        $phone_number_error = 'Phone number is required. ';
+        $is_valid = false;
+    } elseif (!preg_match($ph_phone_regex, $cleaned_phone_number)) {
+        $phone_number_error = 'Invalid Philippine phone number format. Use 09xxxxxxxxx or +639xxxxxxxxx. ';
+        $is_valid = false;
+    }
+
+    // Validate Email
+    if (empty($email_address_for_invoice)) {
+        $email_error = 'Email address is required. 📧';
+        $is_valid = false;
+    } elseif (!filter_var($email_address_for_invoice, FILTER_VALIDATE_EMAIL)) {
+        $email_error = 'Invalid email address format. ';
+        $is_valid = false;
+    }
+
+    // Validate Payment Method
+    if (empty($payment_method)) {
+        $payment_method_error = 'Please select a payment method. ';
+        $is_valid = false;
+    }
+
+    if ($is_valid) {
+        // If validation passes, proceed with email and order processing
+
+        // --- Send Invoice Email ---
+        $to = $email_address_for_invoice;
+        $subject = "Etier Clothing - Order Confirmation";
+        $message = "Dear Customer,\n\n";
+        $message .= "Thank you for your order with Etier Clothing! Your order details are below.\n\n";
+        $message .= "Order Summary:\n";
+        $message .= "Total Amount: ₱" . number_format($total_price, 2) . "\n";
+        $message .= "Payment Method: " . $payment_method . "\n";
+        $message .= "Shipping Address: " . $shipping_address . "\n";
+        $message .= "Phone Number: " . $phone_number . "\n\n"; // Use original $phone_number for email
+
+        $message .= "Items Ordered:\n";
+        foreach ($cart_items as $item) {
+            $message .= "- " . htmlspecialchars($item['name']) . " (Size: " . htmlspecialchars($item['size']) . ", Qty: " . $item['quantity'] . ") - ₱" . number_format($item['price'] * $item['quantity'], 2) . "\n";
+        }
+        $message .= "\nWe will process your order shortly and send further updates.\n\n";
+        $message .= "Thank you for shopping with Etier!\n";
+        $message .= "Etier Clothing Team\n";
+
+        $headers = "From: no-reply@etier-apparel.my-style.in\r\n";
+        $headers .= "Reply-To: no-reply@etier-apparel.my-style.in\r\n";
+        $headers .= "Content-Type: text/plain; charset=UTF-8\r\n";
+
+        // Attempt to send the email
+        if (!mail($to, $subject, $message, $headers)) {
+            error_log("Failed to send order confirmation email to " . $to . " for user " . $user_id);
+        }
+
+        // --- Clear cart items or buy_now_item after "successful" order placement ---
+        if (isset($_SESSION['buy_now_item'])) {
+            unset($_SESSION['buy_now_item']);
+        } else {
+            $clear_cart_stmt = $conn->prepare("DELETE FROM cart WHERE user_id = ?");
+            if ($clear_cart_stmt === false) {
+                error_log("Payment Page: Clear cart prepare failed: (" . $conn->errno . ") " . $conn->error);
+            } else {
+                $clear_cart_stmt->bind_param("i", $user_id);
+                $clear_cart_stmt->execute();
+                $clear_cart_stmt->close();
+            }
+        }
+
+        // Redirect to order_placed.php
+        if (headers_sent()) {
+            echo '<script>window.location.href = "order_placed.php";</script>';
+        } else {
+            header('Location: order_placed.php');
+        }
+        exit();
+    } 
+    
 }
 
 $conn->close();
@@ -102,6 +174,7 @@ $conn->close();
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Checkout | Etier</title>
     <style>
+        /* Your existing CSS */
         body {
             font-family: 'Proxima Nova', sans-serif;
             background-color: #ffffffff;
@@ -113,7 +186,7 @@ $conn->close();
         }
         .page-content {
             flex: 1;
-            padding-top: 130px; /* Adjust based on header height */
+            padding-top: 130px;
             padding-bottom: 90px;
         }
         .checkout-container {
@@ -131,13 +204,13 @@ $conn->close();
             width: 100%;
             font-size: 28px;
             font-weight: bold;
-            margin-bottom: 30px;
+            margin-bottom: 10px;
             text-align: center;
             color: #333;
         }
         .order-summary-section, .payment-details-section {
             flex: 1;
-            min-width: 300px; /* Ensures columns don't get too narrow */
+            min-width: 300px;
         }
         .section-title {
             font-size: 22px;
@@ -188,6 +261,7 @@ $conn->close();
         }
         .form-group {
             margin-bottom: 20px;
+            position: relative; /* Needed for absolute positioning of error message */
         }
         .form-group label {
             display: block;
@@ -205,12 +279,27 @@ $conn->close();
             border: 1px solid #ccc;
             border-radius: 4px;
             font-size: 16px;
-            box-sizing: border-box; /* Include padding in width */
+            box-sizing: border-box;
+            transition: border-color 0.3s ease; /* Smooth transition for border color */
         }
         .form-group textarea {
             resize: vertical;
             min-height: 80px;
         }
+        /* New CSS for error styling */
+        .form-group.error input,
+        .form-group.error textarea,
+        .form-group.error select {
+            border-color: #dc3545; /* Red border for invalid fields */
+        }
+        .input-error-message {
+            color: #dc3545;
+            font-size: 0.85em;
+            margin-top: 5px;
+            display: block; /* Ensures it takes its own line */
+            font-weight: normal;
+        }
+
         .payment-options {
             margin-top: 20px;
             margin-bottom: 30px;
@@ -238,7 +327,7 @@ $conn->close();
         .place-order-btn:hover {
             background-color: #E6BD37;
         }
-        .error-message {
+        .general-error-message { /* Renamed for clarity */
             color: #dc3545;
             text-align: center;
             margin-bottom: 20px;
@@ -249,21 +338,20 @@ $conn->close();
             color: #888;
             margin-top: 5px;
             display: block;
-            font-weight: normal; /* Override bold from label */
+            font-weight: normal;
         }
 
-        /* Responsive adjustments */
         @media (max-width: 768px) {
             .page-content {
-                padding-top: 220px; /* Adjust for mobile header height */
+                padding-top: 100px;
             }
             .checkout-container {
                 flex-direction: column;
-                padding: 20px;
+                padding: 20px; /* Adjusted padding for better spacing */
                 margin: 0 15px;
             }
             .order-summary-section, .payment-details-section {
-                min-width: unset; /* Remove min-width on small screens */
+                min-width: unset;
                 width: 100%;
             }
             .section-title {
@@ -277,14 +365,17 @@ $conn->close();
         <div class="checkout-container">
             <h1 class="checkout-header">Checkout</h1>
 
-            <?php if (isset($_GET['error']) && $_GET['error'] === 'payment_failed'): ?>
-                <p class="error-message">Payment failed. Please try again or choose a different method.</p>
-            <?php endif; ?>
+            <?php
+            // Display general error message if set
+            if (!empty($general_error_message)) {
+                echo '<p class="general-error-message">' . htmlspecialchars($general_error_message) . '</p>';
+            }
+            ?>
 
             <div class="order-summary-section">
                 <h2 class="section-title">Order Summary</h2>
                 <?php if (empty($cart_items)): ?>
-                    <p class="empty-cart-message" style="text-align: left; font-size: 1em; color: #555;">Your cart is empty. Please add items to proceed.</p>
+                    <p class="empty-cart-message" style="text-align: left; font-size: 1em; color: #555;">No items to display for checkout.</p>
                 <?php else: ?>
                     <?php foreach ($cart_items as $item): ?>
                         <div class="order-item">
@@ -308,31 +399,43 @@ $conn->close();
                 <form action="payment.php" method="POST">
                     <input type="hidden" name="action" value="process_payment">
 
-                    <div class="form-group">
+                    <div class="form-group <?= !empty($shipping_address_error) ? 'error' : '' ?>">
                         <label for="shipping_address">Shipping Address:</label>
-                        <textarea id="shipping_address" name="shipping_address" rows="3" required placeholder="Enter your full shipping address"></textarea>
+                        <textarea id="shipping_address" name="shipping_address" rows="3" required placeholder="Enter your full shipping address"><?= htmlspecialchars($shipping_address) ?></textarea>
+                        <?php if (!empty($shipping_address_error)): ?>
+                            <span class="input-error-message"><?= $shipping_address_error ?></span>
+                        <?php endif; ?>
                     </div>
 
-                    <div class="form-group">
+                    <div class="form-group <?= !empty($phone_number_error) ? 'error' : '' ?>">
                         <label for="phone_number">Phone Number:</label>
-                        <input type="tel" id="phone_number" name="phone_number" required placeholder="e.g., +639123456789">
+                        <input type="tel" id="phone_number" name="phone_number" value="<?= htmlspecialchars($phone_number) ?>" required placeholder="+639xxxxxxxxx or 09xxxxxxxxx">
+                        <?php if (!empty($phone_number_error)): ?>
+                            <span class="input-error-message"><?= $phone_number_error ?></span>
+                        <?php endif; ?>
                     </div>
 
-                    <div class="form-group">
+                    <div class="form-group <?= !empty($email_error) ? 'error' : '' ?>">
                         <label for="email">Email Address:</label>
-                        <input type="email" id="email" name="email" required placeholder="your.email@example.com">
+                        <input type="email" id="email" name="email" value="<?= htmlspecialchars($email_address_for_invoice) ?>" required placeholder="your.email@example.com">
                         <small class="email-invoice-note">Your invoice and order updates will be sent to this email address.</small>
+                        <?php if (!empty($email_error)): ?>
+                            <span class="input-error-message"><?= $email_error ?></span>
+                        <?php endif; ?>
                     </div>
 
-                    <div class="form-group">
+                    <div class="form-group <?= !empty($payment_method_error) ? 'error' : '' ?>">
                         <label for="payment_method_select">Payment Method:</label>
                         <select id="payment_method_select" name="payment_method" required>
                             <option value="">Select a method</option>
-                            <option value="Credit Card">Credit Card</option>
-                            <option value="PayPal">PayPal</option>
-                            <option value="Bank Transfer">Bank Transfer</option>
-                            <option value="Cash on Delivery">Cash on Delivery (COD)</option>
+                            <option value="Credit Card" <?= ($payment_method === 'Credit Card' ? 'selected' : '') ?>>Credit Card</option>
+                            <option value="GCash" <?= ($payment_method === 'GCash' ? 'selected' : '') ?>>GCash</option>
+                            <option value="Bank Transfer" <?= ($payment_method === 'Bank Transfer' ? 'selected' : '') ?>>Bank Transfer</option>
+                            <option value="Cash on Delivery" <?= ($payment_method === 'Cash on Delivery' ? 'selected' : '') ?>>Cash on Delivery (COD)</option>
                         </select>
+                        <?php if (!empty($payment_method_error)): ?>
+                            <span class="input-error-message"><?= $payment_method_error ?></span>
+                        <?php endif; ?>
                     </div>
 
                     <button type="submit" class="place-order-btn">Place Order</button>

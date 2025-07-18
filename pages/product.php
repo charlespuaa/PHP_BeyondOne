@@ -18,8 +18,6 @@ if ($result->num_rows === 0) {
 
 $product = $result->fetch_assoc();
 
-// It's good practice to sanitize and validate $_GET['view'] more robustly
-// For now, keeping it simple as per your code
 $imageToShow = ($view === 'back' && !empty($product['hover_image'])) ? $product['hover_image'] : $product['image'];
 
 // --- Handle Add to Cart / Buy Now form submission ---
@@ -35,8 +33,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     $product_id = intval($_POST['product_id']);
     $size = htmlspecialchars($_POST['size']);
     $quantity = intval($_POST['quantity']);
-    // Check for the 'buy_now' flag from the form
-    $is_buy_now = isset($_POST['buy_now']) && $_POST['buy_now'] === '1';
+    $is_buy_now = isset($_POST['buy_now']) && $_POST['buy_now'] === '1'; // Check for the 'buy_now' flag
 
     // Basic validation for quantity
     if ($quantity <= 0) {
@@ -51,46 +48,46 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         exit();
     }
 
-    // If it's a "Buy Now" action, clear the user's cart first
+    // --- Special handling for "Buy Now" ---
     if ($is_buy_now) {
-        $clear_stmt = $conn->prepare("DELETE FROM cart WHERE user_id = ?");
-        $clear_stmt->bind_param("i", $user_id);
-        $clear_stmt->execute();
-        $clear_stmt->close();
-    }
-
-    // Check if product already exists in cart for this user and size
-    // Note: If 'buy_now' cleared the cart, this 'SELECT' will likely find nothing
-    // unless the same item was just added back (which is expected for buy now).
-    $stmt = $conn->prepare("SELECT id, quantity FROM cart WHERE user_id = ? AND product_id = ? AND size = ?");
-    $stmt->bind_param("iis", $user_id, $product_id, $size);
-    $stmt->execute();
-    $stmt->store_result();
-
-    if ($stmt->num_rows > 0) {
-        // Update quantity if item already exists (relevant for "Add to Bag")
-        $stmt->bind_result($cart_item_id, $current_quantity);
-        $stmt->fetch();
-        $new_quantity = $current_quantity + $quantity;
-        $update_stmt = $conn->prepare("UPDATE cart SET quantity = ? WHERE id = ?");
-        $update_stmt->bind_param("ii", $new_quantity, $cart_item_id);
-        $update_stmt->execute();
-        $update_stmt->close();
-    } else {
-        // Insert new item into cart
-        $insert_stmt = $conn->prepare("INSERT INTO cart (user_id, product_id, quantity, size) VALUES (?, ?, ?, ?)");
-        $insert_stmt->bind_param("iiis", $user_id, $product_id, $quantity, $size);
-        $insert_stmt->execute();
-        $insert_stmt->close();
-    }
-    $stmt->close();
-
-    // Check if we need to redirect to payment (for "Buy Now")
-    if ($is_buy_now) {
+        // Store the single item in a dedicated session variable for direct checkout
+        $_SESSION['buy_now_item'] = [
+            'product_id' => $product_id,
+            'name' => $product['name'],
+            'price' => $product['price'],
+            'image' => $product['image'],
+            'hover_image' => $product['hover_image'], // Include if needed, though 'image' is usually sufficient for checkout display
+            'quantity' => $quantity,
+            'size' => $size
+        ];
         header('Location: payment.php'); // Redirect directly to payment page
         exit();
     } else {
-        // Set success message for "Add to Bag"
+        // --- Existing "Add to Bag" logic ---
+        // Check if product already exists in cart for this user and size
+        $stmt = $conn->prepare("SELECT id, quantity FROM cart WHERE user_id = ? AND product_id = ? AND size = ?");
+        $stmt->bind_param("iis", $user_id, $product_id, $size);
+        $stmt->execute();
+        $stmt->store_result();
+
+        if ($stmt->num_rows > 0) {
+            // Update quantity if item already exists
+            $stmt->bind_result($cart_item_id, $current_quantity);
+            $stmt->fetch();
+            $new_quantity = $current_quantity + $quantity;
+            $update_stmt = $conn->prepare("UPDATE cart SET quantity = ? WHERE id = ?");
+            $update_stmt->bind_param("ii", $new_quantity, $cart_item_id);
+            $update_stmt->execute();
+            $update_stmt->close();
+        } else {
+            // Insert new item into cart
+            $insert_stmt = $conn->prepare("INSERT INTO cart (user_id, product_id, quantity, size) VALUES (?, ?, ?, ?)");
+            $insert_stmt->bind_param("iiis", $user_id, $product_id, $quantity, $size);
+            $insert_stmt->execute();
+            $insert_stmt->close();
+        }
+        $stmt->close();
+
         $_SESSION['message'] = "Item added to bag successfully! ✅";
         $_SESSION['message_type'] = "success";
         header("Location: product.php?id=$id"); // Redirect back to product page
@@ -289,7 +286,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
             }
 
             .main-image img {
-                width: 100%;
+                margin-left: 50px;
+                width: 70%;
                 height: auto;
             }
 
@@ -341,22 +339,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                         <div class="sizes">
                             <strong>Size:</strong><br>
                             <?php
-                            // Assume these are the default sizes if no product_sizes table exists.
-                            // If you have a product_sizes table, you'd fetch them here.
+                
                             $available_sizes = ['XS', 'S', 'M', 'L', 'XL']; // Example fixed sizes
 
-                            // If you have a product_sizes table uncomment this and comment the above line:
-                            /*
-                            $stmt_sizes = $conn->prepare("SELECT size FROM product_sizes WHERE product_id = ? ORDER BY FIELD(size, 'XS', 'S', 'M', 'L', 'XL', 'XXL')");
-                            $stmt_sizes->bind_param("i", $product['id']);
-                            $stmt_sizes->execute();
-                            $result_sizes = $stmt_sizes->get_result();
-                            $available_sizes = [];
-                            while ($row_size = $result_sizes->fetch_assoc()) {
-                                $available_sizes[] = $row_size['size'];
-                            }
-                            $stmt_sizes->close();
-                            */
+               
                             ?>
                             <?php if (!empty($available_sizes)): ?>
                                 <?php foreach ($available_sizes as $size): ?>

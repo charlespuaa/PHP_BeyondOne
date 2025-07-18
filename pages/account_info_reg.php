@@ -1,4 +1,7 @@
 <?php
+session_start();
+
+// Database connection details
 $host = 'localhost';
 $db   = 'etierproducts';
 $user = 'root';
@@ -36,122 +39,158 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['register'])) {
     } elseif (empty($street_name) || empty($house_number) || empty($barangay) || empty($province) || empty($city) || empty($region) || empty($postal_code)) {
         $message = "<div class='error-text'>Please complete your address information before registering.</div>";
     } elseif (!preg_match("/^[A-Za-z0-9_]{3,20}$/", $username)) {
-        $message = "<div class='error-text'>Invalid username format.</div>";
+        $message = "<div class='error-text'>Invalid username format. Username must be 3-20 characters, alphanumeric or underscore.</div>"; // More specific error
     } elseif (!preg_match("/^.{6,}$/", $password)) {
         $message = "<div class='error-text'>Password must be at least 6 characters.</div>";
     } elseif ($password !== $confirm_password) {
         $message = "<div class='error-text'>Passwords do not match.</div>";
     } else {
-        $hashed_password = password_hash($password, PASSWORD_DEFAULT);
-        $stmt = $conn->prepare("INSERT INTO users 
-            (first_name, middle_name, last_name, birthday, street_name, house_number, building, postal_code, barangay, province, city, region, username, password, email, contact_number)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-        if ($stmt) {
-            $stmt->bind_param("ssssssssssssssss",
-                $first_name, $middle_name, $last_name, $birthday,
-                $street_name, $house_number, $building, $postal_code,
-                $barangay, $province, $city, $region,
-                $username, $hashed_password, $email, $contact_number
-            );
-            if ($stmt->execute()) {
-                $to = $email;
-                $subject = "Welcome to ETIER – Your Account Has Been Successfully Created!";
-
-                $body = "
-                <html>
-                <head>
-                  <style>
-                    body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-                    .header { background-color: #E6BD37; padding: 20px; text-align: center; color: white; }
-                    .content { padding: 20px; }
-                    .footer { font-size: 0.9em; color: #777; text-align: center; padding: 20px; border-top: 1px solid #ddd; margin-top: 30px; }
-                  </style>
-                </head>
-                <body>
-                  <div class='header'>
-                    <h2>Welcome to ETIER</h2>
-                </div>
-                  <div class='content'>
-                    <p>Dear <strong>$first_name</strong>,</p>
-                    <p>We’re excited to welcome you to <strong>ETIER</strong> – your go-to destination for stylish, high-quality apparel. Your account has been successfully created.</p>
-
-                    <p>As a registered member, you now have access to:</p>
-                    <ul>
-                      <li>Exclusive product launches and offers</li>
-                      <li>Faster checkout and order tracking</li>
-                      <li>Personalized recommendations</li>
-                    </ul>
-
-                    <p>You may now sign in and begin shopping.</p>
-
-                    <p>If you did not create this account or have any concerns, please let us know.</p>
-
-                    <p>Thank you for choosing Etier. We’re glad to have you with us!</p>
-
-                    <p>Warm regards,<br>
-                    <strong>The ETIER Team</strong></p>
-                  </div>
-                  <div class='footer'>
-                    &copy; 2025 BeyondOne | ETIER Clothing<br>
-                    This website is for educational purposes only and is a final project requirement.
-                  </div>
-                </body>
-                </html>";
-
-                $headers = "MIME-Version: 1.0\r\n";
-                $headers .= "Content-type:text/html;charset=UTF-8\r\n";
-                $headers .= "From: Etier <no-reply@etier-clothing>\r\n";
-
-                if (mail($to, $subject, $body, $headers)) {
-                    $message = "<div class='success'>Registered! Email sent to $email.</div>";
-                    echo "<script>setTimeout(function(){ window.location.href = 'signin.php'; }, 2000);</script>";
-                } else {
-                    $message = "<div class='error-text'>Registered, but email failed to send.</div>";
-                }
+        // Check if username or email already exists
+        $check_stmt = $conn->prepare("SELECT id FROM users WHERE username = ? OR email = ?");
+        if ($check_stmt) {
+            $check_stmt->bind_param("ss", $username, $email);
+            $check_stmt->execute();
+            $check_stmt->store_result();
+            if ($check_stmt->num_rows > 0) {
+                $message = "<div class='error-text'>Username or Email already exists. Please choose a different one.</div>";
             } else {
-                $message = "<div class='error-text'>DB error: {$stmt->error}</div>";
+                $hashed_password = password_hash($password, PASSWORD_DEFAULT);
+                $stmt = $conn->prepare("INSERT INTO users 
+                    (first_name, middle_name, last_name, birthday, street_name, house_number, building, postal_code, barangay, province, city, region, username, password, email, contact_number)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+                if ($stmt) {
+                    $stmt->bind_param("ssssssssssssssss",
+                        $first_name, $middle_name, $last_name, $birthday,
+                        $street_name, $house_number, $building, $postal_code,
+                        $barangay, $province, $city, $region,
+                        $username, $hashed_password, $email, $contact_number
+                    );
+                    if ($stmt->execute()) {
+                        $to = $email;
+                        $subject = "Welcome to ETIER – Your Account Has Been Successfully Created!";
+
+                        $body = "
+                        <html>
+                        <head>
+                          <style>
+                            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+                            .header { background-color: #E6BD37; padding: 20px; text-align: center; color: white; }
+                            .content { padding: 20px; }
+                            .footer { font-size: 0.9em; color: #777; text-align: center; padding: 20px; border-top: 1px solid #ddd; margin-top: 30px; }
+                          </style>
+                        </head>
+                        <body>
+                          <div class='header'>
+                            <h2>Welcome to ETIER</h2>
+                          </div>
+                          <div class='content'>
+                            <p>Dear <strong>" . htmlspecialchars($first_name) . "</strong>,</p>
+                            <p>We’re excited to welcome you to <strong>ETIER</strong> – your go-to destination for stylish, high-quality apparel. Your account has been successfully created.</p>
+
+                            <p>As a registered member, you now have access to:</p>
+                            <ul>
+                              <li>Exclusive product launches and offers</li>
+                              <li>Faster checkout and order tracking</li>
+                              <li>Personalized recommendations</li>
+                            </ul>
+
+                            <p>You may now sign in and begin shopping.</p>
+
+                            <p>If you did not create this account or have any concerns, please let us know.</p>
+
+                            <p>Thank you for choosing Etier. We’re glad to have you with us!</p>
+
+                            <p>Warm regards,<br>
+                            <strong>The ETIER Team</strong></p>
+                          </div>
+                          <div class='footer'>
+                            &copy; 2025 BeyondOne | ETIER Clothing<br>
+                            This website is for educational purposes only and is a final project requirement.
+                          </div>
+                        </body>
+                        </html>";
+
+                        $headers = "MIME-Version: 1.0\r\n";
+                        $headers .= "Content-type:text/html;charset=UTF-8\r\n";
+                        $headers .= "From: Etier <no-reply@etier-clothing>\r\n";
+
+                        if (mail($to, $subject, $body, $headers)) {
+                            $message = "<div class='success'>Registered successfully! A welcome email has been sent to " . htmlspecialchars($email) . ".</div>";
+                            // Redirect after 2 seconds to signin.php
+                            echo "<script>setTimeout(function(){ window.location.href = 'signin.php'; }, 2000);</script>";
+                        } else {
+                            $message = "<div class='error-text'>Registered successfully, but failed to send welcome email.</div>";
+                            // Still redirect even if email fails, as registration was successful
+                            echo "<script>setTimeout(function(){ window.location.href = 'signin.php'; }, 2000);</script>";
+                        }
+                    } else {
+                        $message = "<div class='error-text'>Database error during registration: {$stmt->error}</div>";
+                    }
+                    $stmt->close();
+                } else {
+                    $message = "<div class='error-text'>Prepare statement error: {$conn->error}</div>";
+                }
             }
-            $stmt->close();
+            $check_stmt->close();
         } else {
-            $message = "<div class='error-text'>Prepare error: {$conn->error}</div>";
+            $message = "<div class='error-text'>Database prepare error for username/email check: {$conn->error}</div>";
         }
     }
 }
 
+// Include header.php AFTER all potential POST processing and redirects
+// This ensures no "headers already sent" error.
 include 'header.php';
 ?>
-
-
 
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Registration</title>
+    <title>Registration - Etier</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
-        h1 {
-            text-align: center;
-            margin-bottom: 30px;
-            font-size: 2rem;
+        /* Sticky Footer CSS */
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden; /* Prevent horizontal scrolling */
         }
+
         body {
             font-family: Arial, sans-serif;
             color: #000;
             background: #fff;
-            padding: 20px;
-            padding-top: 170px;
+            display: flex; /* Use flexbox for sticky footer */
+            flex-direction: column; /* Stack children vertically */
+            padding-top: 170px; /* Adjust based on header height */
+            box-sizing: border-box; /* Include padding in element's total width and height */
+        }
+
+        .main-content-wrapper {
+            flex: 1; /* This div will grow to fill available space, pushing footer down */
+            padding: 20px; /* Add padding here instead of directly on body for content */
+            padding-bottom: 50px; /* Add some space before the footer starts */
+            box-sizing: border-box;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2rem;
         }
         fieldset {
             border: 2px solid #E6BD37;
             border-radius: 10px;
             padding: 20px;
             background: #fff;
-            width: 90%;
-            max-width: 480px;
-            margin: auto;
+            width: 90%; /* Use percentage for responsiveness */
+            max-width: 480px; /* Max width for larger screens */
+            margin: auto; /* Center the fieldset */
             box-shadow: 0 4px 12px rgba(0,0,0,0.1);
             transition: transform 0.2s, box-shadow 0.2s;
+            box-sizing: border-box; /* Include padding in element's total width and height */
         }
         fieldset:hover {
             transform: translateY(-3px);
@@ -167,7 +206,7 @@ include 'header.php';
             margin-top: 15px;
             font-size: 1rem;
         }
-        input[type="text"], input[type="password"] {
+        input[type="text"], input[type="password"], input[type="email"], input[type="tel"], input[type="date"] {
             width: 100%;
             padding: 10px;
             margin-top: 6px;
@@ -195,86 +234,108 @@ include 'header.php';
             color: #E6BD37;
             border: 2px solid #E6BD37;
         }
-        .success, .error-text {
+        .success {
+            color: green;
             text-align: center;
             padding: 10px;
             margin-top: 15px;
             font-size: 1rem;
         }
-        .success { color: green; }
-        .error-text { color: red; }
+        .error-text {
+            color: red;
+            text-align: center;
+            padding: 10px;
+            margin-top: 15px;
+            font-size: 1rem;
+        }
 
-    /* responsiveness across devices */
+        /* Responsiveness */
         @media (max-width: 768px) {
-    h1 {
-        font-size: 1.7rem;
-    }
-    fieldset {
-        padding: 16px;
-        margin: 10px auto;
-    }
-    input[type="submit"] {
-        font-size: 1rem;
-        padding: 10px;
-    }
-}
+            body {
+                padding-top: 130px; /* Adjust for smaller header on tablets */
+            }
+            .main-content-wrapper {
+                padding: 15px; /* Adjust padding for tablet */
+            }
+            h1 {
+                font-size: 1.7rem;
+            }
+            fieldset {
+                padding: 16px;
+            }
+            input[type="submit"] {
+                font-size: 1rem;
+                padding: 10px;
+            }
+        }
 
-@media (max-width: 480px) {
-    h1 {
-        font-size: 1.5rem;
-    }
-    fieldset {
-        padding: 14px;
-        margin: 8px auto;
-    }
-    input[type="text"], input[type="password"] {
-        padding: 6px;
-        font-size: 0.9rem;
-    }
-    input[type="submit"] {
-        font-size: 0.95rem;
-        padding: 9px;
-    }
-    label {
-        font-size: 0.95rem;
-    }
-}
-
+        @media (max-width: 480px) {
+            body {
+                padding-top: 100px; /* Adjust for smaller header on phones */
+            }
+            .main-content-wrapper {
+                padding: 10px; /* Adjust padding for phones */
+                padding-bottom: 30px; /* Less space before footer on small screens */
+            }
+            h1 {
+                font-size: 1.5rem;
+            }
+            fieldset {
+                padding: 14px;
+            }
+            input[type="text"], input[type="password"], input[type="email"], input[type="tel"], input[type="date"] {
+                padding: 8px;
+                font-size: 0.95rem;
+            }
+            input[type="submit"] {
+                font-size: 0.95rem;
+                padding: 9px;
+            }
+            label {
+                font-size: 0.95rem;
+            }
+        }
     </style>
 </head>
 <body>
 
-<h1>Registration</h1>
-<form method="post">
-    <fieldset>
-        <legend>Account Information</legend>
-        <label>Username</label>
-        <input type="text" name="username" value="<?= htmlspecialchars($username) ?>" required>
+    <!-- This wrapper will contain all content that should push the footer down -->
+    <div class="main-content-wrapper">
+        <h1>Registration</h1>
+        <form method="post">
+            <fieldset>
+                <legend>Account Information</legend>
+                <label>Username</label>
+                <input type="text" name="username" value="<?= htmlspecialchars($username) ?>" required>
 
-        <label>Password</label>
-        <input type="password" name="password" required>
+                <label>Password</label>
+                <input type="password" name="password" required>
 
-        <label>Confirm Password</label>
-        <input type="password" name="confirm_password" required>
+                <label>Confirm Password</label>
+                <input type="password" name="confirm_password" required>
 
-        <?php
-        foreach ($_POST as $key => $value) {
-            if (!in_array($key, ['username', 'password', 'confirm_password', 'register'])) {
-                echo '<input type="hidden" name="' . htmlspecialchars($key) . '" value="' . htmlspecialchars($value) . '">';
-            }
-        }
-        ?>
+                <?php
+                // This loop correctly retains hidden fields from previous steps
+                foreach ($_POST as $key => $value) {
+                    if (!in_array($key, ['username', 'password', 'confirm_password', 'register'])) {
+                        echo '<input type="hidden" name="' . htmlspecialchars($key) . '" value="' . htmlspecialchars($value) . '">';
+                    }
+                }
+                ?>
 
-        <?= $message ?>
+                <?= $message ?>
 
-        <input type="submit" name="register" value="Register">
-    </fieldset>
-</form>
+                <input type="submit" name="register" value="Register">
+            </fieldset>
+        </form>
 
-<p style="text-align:center; margin-top: 20px;">
-    Already have an account?
-    <a href="signin.php" style="color: #E6BD37; text-decoration: underline;">Sign in</a>
-</p>
-<?php include 'footer.php'; ?>
+        <p style="text-align:center; margin-top: 20px;">
+            Already have an account?
+            <a href="signin.php" style="color: #E6BD37; text-decoration: underline;">Sign in</a>
+        </p>
+    </div>
+
+    <?php include 'footer.php'; // Footer is now correctly inside the body and after main content ?>
+
 </body>
 </html>

@@ -1,6 +1,5 @@
 <?php
-// This MUST be the very first line in order_placed.php
-// It includes header.php, which contains session_start() on its first line.
+session_start(); // Start the session to access session variables
 include 'header.php';
 ?>
 <!DOCTYPE html>

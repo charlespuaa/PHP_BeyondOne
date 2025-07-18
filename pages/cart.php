@@ -1,106 +1,123 @@
 <?php
-session_start(); // Start session to check login status
-include '../db.php'; // Include your database connection
+session_start();
+include '../db.php';
 
-// Redirect to signin.php if user is not logged in
-if (!isset($_SESSION['user_id'])) {
-    header('Location: signin.php');
-    exit();
-}
+$user_id = null; // Initialize user_id as null
 
-$user_id = $_SESSION['user_id'];
+// Check if user is logged in
+$is_logged_in = isset($_SESSION['user_id']);
 
-// Handle adding to cart (from product.php POST request)
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'add_to_cart') {
-    $product_id = intval($_POST['product_id']);
-    $size = htmlspecialchars($_POST['size']);
-    $quantity = intval($_POST['quantity']);
+if ($is_logged_in) {
+    $user_id = $_SESSION['user_id'];
 
-    if ($quantity <= 0) {
-        $quantity = 1; // Ensure quantity is at least 1
+    // Handle adding to cart (only if logged in)
+    if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'add_to_cart') {
+        $product_id = intval($_POST['product_id']);
+        $size = htmlspecialchars($_POST['size']);
+        $quantity = intval($_POST['quantity']);
+
+        if ($quantity <= 0) $quantity = 1;
+
+        $stmt = $conn->prepare("SELECT id, quantity FROM cart WHERE user_id = ? AND product_id = ? AND size = ?");
+        $stmt->bind_param("iis", $user_id, $product_id, $size);
+        $stmt->execute();
+        $stmt->store_result();
+
+        if ($stmt->num_rows > 0) {
+            $stmt->bind_result($cart_item_id, $current_quantity);
+            $stmt->fetch();
+            $new_quantity = $current_quantity + $quantity;
+            $update_stmt = $conn->prepare("UPDATE cart SET quantity = ? WHERE id = ?");
+            $update_stmt->bind_param("ii", $new_quantity, $cart_item_id);
+            $update_stmt->execute();
+            $update_stmt->close();
+        } else {
+            $insert_stmt = $conn->prepare("INSERT INTO cart (user_id, product_id, quantity, size) VALUES (?, ?, ?, ?)");
+            $insert_stmt->bind_param("iiis", $user_id, $product_id, $quantity, $size);
+            $insert_stmt->execute();
+            $insert_stmt->close();
+        }
+        $stmt->close();
+        header('Location: cart.php');
+        exit();
     }
 
-    // Check if the product (with specific size) is already in the cart for this user
-    $stmt = $conn->prepare("SELECT id, quantity FROM cart WHERE user_id = ? AND product_id = ? AND size = ?");
-    $stmt->bind_param("iis", $user_id, $product_id, $size);
-    $stmt->execute();
-    $stmt->store_result();
+    // Handle updating quantity (only if logged in)
+    if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'update_quantity') {
+        $cart_item_id = intval($_POST['cart_item_id']);
+        $new_quantity = intval($_POST['quantity']);
 
-    if ($stmt->num_rows > 0) {
-        // Product already in cart, update quantity
-        $stmt->bind_result($cart_item_id, $current_quantity);
-        $stmt->fetch();
-        $new_quantity = $current_quantity + $quantity;
-        $update_stmt = $conn->prepare("UPDATE cart SET quantity = ? WHERE id = ?");
-        $update_stmt->bind_param("ii", $new_quantity, $cart_item_id);
-        $update_stmt->execute();
-        $update_stmt->close();
-    } else {
-        // Product not in cart, insert new item
-        $insert_stmt = $conn->prepare("INSERT INTO cart (user_id, product_id, quantity, size) VALUES (?, ?, ?, ?)");
-        $insert_stmt->bind_param("iiis", $user_id, $product_id, $quantity, $size);
-        $insert_stmt->execute();
-        $insert_stmt->close();
+        if ($new_quantity <= 0) {
+            $delete_stmt = $conn->prepare("DELETE FROM cart WHERE id = ? AND user_id = ?");
+            $delete_stmt->bind_param("ii", $cart_item_id, $user_id);
+            $delete_stmt->execute();
+            $delete_stmt->close();
+        } else {
+            $update_stmt = $conn->prepare("UPDATE cart SET quantity = ? WHERE id = ? AND user_id = ?");
+            $update_stmt->bind_param("iii", $new_quantity, $cart_item_id, $user_id);
+            $update_stmt->execute();
+            $update_stmt->close();
+        }
+        header('Location: cart.php');
+        exit();
     }
-    $stmt->close();
 
-    // Redirect to cart.php to prevent re-submission on refresh
-    header('Location: cart.php');
-    exit();
-}
-
-// Handle updating item quantity in cart
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'update_quantity') {
-    $cart_item_id = intval($_POST['cart_item_id']);
-    $new_quantity = intval($_POST['quantity']);
-
-    if ($new_quantity <= 0) {
-        // If quantity is 0 or less, remove the item
+    // Handle removing item (only if logged in)
+    if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'remove_item') {
+        $cart_item_id = intval($_POST['cart_item_id']);
         $delete_stmt = $conn->prepare("DELETE FROM cart WHERE id = ? AND user_id = ?");
         $delete_stmt->bind_param("ii", $cart_item_id, $user_id);
         $delete_stmt->execute();
         $delete_stmt->close();
-    } else {
-        // Update quantity
-        $update_stmt = $conn->prepare("UPDATE cart SET quantity = ? WHERE id = ? AND user_id = ?");
-        $update_stmt->bind_param("iii", $new_quantity, $cart_item_id, $user_id);
-        $update_stmt->execute();
-        $update_stmt->close();
+        header('Location: cart.php');
+        exit();
     }
-    header('Location: cart.php');
-    exit();
+
+    // Handle checkout (only if logged in)
+    if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'checkout') {
+        // Verify cart is not empty
+        $check_cart = $conn->prepare("SELECT COUNT(*) FROM cart WHERE user_id = ?");
+        $check_cart->bind_param("i", $user_id);
+        $check_cart->execute();
+        $check_cart->bind_result($cart_count);
+        $check_cart->fetch();
+        $check_cart->close();
+
+        if ($cart_count == 0) {
+            $_SESSION['error'] = "Your cart is empty. Please add items before checkout.";
+            header('Location: cart.php');
+            exit();
+        }
+        
+        // Redirect to payment page
+        header('Location: payment.php');
+        exit();
+    }
+
+    // Fetch cart items (only if logged in)
+    $cart_items = [];
+    $total_price = 0;
+
+    $sql = "SELECT c.id as cart_item_id, p.id as product_id, p.name, p.price, p.image, p.hover_image, c.quantity, c.size
+            FROM cart c
+            JOIN products p ON c.product_id = p.id
+            WHERE c.user_id = ? ORDER BY c.added_at DESC";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("i", $user_id);
+    $stmt->execute();
+    $result = $stmt->get_result();
+
+    while ($row = $result->fetch_assoc()) {
+        $cart_items[] = $row;
+        $total_price += $row['price'] * $row['quantity'];
+    }
+    $stmt->close();
+} else {
+    // If not logged in, ensure cart_items and total_price are empty/zero
+    $cart_items = [];
+    $total_price = 0;
 }
 
-// Handle removing item from cart
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'remove_item') {
-    $cart_item_id = intval($_POST['cart_item_id']);
-    $delete_stmt = $conn->prepare("DELETE FROM cart WHERE id = ? AND user_id = ?");
-    $delete_stmt->bind_param("ii", $cart_item_id, $user_id);
-    $delete_stmt->execute();
-    $delete_stmt->close();
-    header('Location: cart.php');
-    exit();
-}
-
-
-// Fetch cart items for the current user
-$cart_items = [];
-$total_price = 0;
-
-$sql = "SELECT c.id as cart_item_id, p.id as product_id, p.name, p.price, p.image, p.hover_image, c.quantity, c.size
-        FROM cart c
-        JOIN products p ON c.product_id = p.id
-        WHERE c.user_id = ? ORDER BY c.added_at DESC";
-$stmt = $conn->prepare($sql);
-$stmt->bind_param("i", $user_id);
-$stmt->execute();
-$result = $stmt->get_result();
-
-while ($row = $result->fetch_assoc()) {
-    $cart_items[] = $row;
-    $total_price += $row['price'] * $row['quantity'];
-}
-$stmt->close();
 $conn->close();
 ?>
 
@@ -110,7 +127,7 @@ $conn->close();
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Your Cart | Etier</title>
-    <?php include 'header.php'; // Include your header.php which contains the styling ?>
+    <?php include 'header.php'; ?>
     <style>
         body {
             font-family: 'Proxima Nova', sans-serif;
@@ -123,7 +140,7 @@ $conn->close();
         }
         .page-content {
             flex: 1;
-            padding-top: 180px; /* Adjust based on header height */
+            padding-top: 180px;
             padding-bottom: 90px;
         }
         .cart-container {
@@ -141,6 +158,40 @@ $conn->close();
             text-align: center;
             color: #333;
         }
+        /* New styles for the sign-in prompt */
+        .signin-prompt {
+            text-align: center;
+            padding: 50px 20px;
+            border: 1px dashed #E6BD37;
+            border-radius: 8px;
+            background-color: #fffaf0; /* Light gold background */
+            margin-top: 30px;
+        }
+        .signin-prompt h2 {
+            font-size: 24px;
+            color: #333;
+            margin-bottom: 15px;
+        }
+        .signin-prompt p {
+            font-size: 16px;
+            color: #555;
+            margin-bottom: 25px;
+            line-height: 1.6;
+        }
+        .signin-link {
+            display: inline-block;
+            background: black;
+            color: white;
+            padding: 12px 25px;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: bold;
+            transition: background-color 0.3s ease;
+        }
+        .signin-link:hover {
+            background-color: #E6BD37;
+        }
+        /* Existing cart styles below */
         .cart-item {
             display: flex;
             align-items: center;
@@ -234,11 +285,16 @@ $conn->close();
             color: #777;
             padding: 50px 0;
         }
+        .error-message {
+            color: #dc3545;
+            text-align: center;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
 
-        /* Responsive adjustments */
         @media (max-width: 768px) {
             .page-content {
-                padding-top: 220px; /* Adjust for mobile header height */
+                padding-top: 220px;
             }
             .cart-container {
                 padding: 20px;
@@ -247,7 +303,6 @@ $conn->close();
             .cart-item {
                 flex-direction: column;
                 align-items: flex-start;
-                text-align: left;
             }
             .cart-item-image {
                 width: 80px;
@@ -267,7 +322,6 @@ $conn->close();
                 width: 100%;
                 flex-direction: row;
                 justify-content: space-between;
-                align-items: center;
             }
             .cart-summary {
                 text-align: center;
@@ -284,7 +338,21 @@ $conn->close();
         <div class="cart-container">
             <h1 class="cart-header">Your Shopping Cart</h1>
 
-            <?php if (empty($cart_items)): ?>
+            <?php if (isset($_SESSION['error'])): ?>
+                <div class="error-message"><?= $_SESSION['error'] ?></div>
+                <?php unset($_SESSION['error']); ?>
+            <?php endif; ?>
+
+            <?php if (!$is_logged_in): ?>
+                <div class="signin-prompt">
+                    <h2>Unlock Your Style Journey! ✨</h2>
+                    <p>
+                        Sign in to Etier to seamlessly manage your cart, track your orders,<br>
+                        and enjoy exclusive access to our latest collections and personalized recommendations.
+                    </p>
+                    <a href="signin.php" class="signin-link">Sign In to Etier</a>
+                </div>
+            <?php elseif (empty($cart_items)): ?>
                 <p class="empty-cart-message">Your cart is empty. Start shopping!</p>
             <?php else: ?>
                 <?php foreach ($cart_items as $item): ?>
@@ -313,12 +381,15 @@ $conn->close();
 
                 <div class="cart-summary">
                     <div class="cart-total">Total: ₱<?= number_format($total_price, 2) ?></div>
-                    <button class="checkout-btn">Proceed to Checkout</button>
+                    <form action="cart.php" method="POST">
+                        <input type="hidden" name="action" value="checkout">
+                        <button type="submit" class="checkout-btn">Proceed to Checkout</button>
+                    </form>
                 </div>
             <?php endif; ?>
         </div>
     </div>
 
-    <?php include 'footer.php'; // Assuming you have a footer.php ?>
+    <?php include 'footer.php'; ?>
 </body>
 </html>
