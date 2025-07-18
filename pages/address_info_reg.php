@@ -82,17 +82,35 @@ $region = $_POST['region'] ?? '';
             color: #E6BD37;
             border: 2px solid #E6BD37;
         }
-
+        /* responsiveness across devices */
         @media (max-width: 768px) {
-            body { padding-top: 130px; padding-left: 10px; padding-right: 10px; }
-            h1 { font-size: 1.6rem; }
-            input[type="submit"] { font-size: 0.95rem; padding: 10px; }
-            label { font-size: 0.9rem; }
+            body { 
+            padding-top: 130px; 
+            padding-left: 10px; 
+            padding-right: 10px; 
+        }
+            h1 { 
+            font-size: 1.6rem; 
+        }
+            input[type="submit"] { 
+            font-size: 0.95rem; 
+            padding: 10px; 
+        }
+            label { 
+            font-size: 0.9rem; 
+        }
+
         }
 
         @media (max-width: 480px) {
-            h1 { font-size: 1.3rem; }
-            input[type="text"] { font-size: 0.95rem; padding: 8px; }
+            h1 { 
+            font-size: 1.3rem; 
+        }
+            input[type="text"] { 
+            font-size: 0.95rem; 
+            padding: 8px; 
+        }
+
         }
     </style>
 </head>
