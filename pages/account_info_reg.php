@@ -1,6 +1,16 @@
 <?php
 session_start();
 
+// Include PHPMailer classes
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\Exception;
+
+// Corrected paths based on your folder structure: PHP_BeyondOne/PHPMailer/
+require __DIR__ . '/../PHPMailer/Exception.php';
+require __DIR__ . '/../PHPMailer/PHPMailer.php';
+require __DIR__ . '/../PHPMailer/SMTP.php';
+
+
 // Database connection details
 $host = 'localhost';
 $db   = 'etierproducts';
@@ -39,7 +49,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['register'])) {
     } elseif (empty($street_name) || empty($house_number) || empty($barangay) || empty($province) || empty($city) || empty($region) || empty($postal_code)) {
         $message = "<div class='error-text'>Please complete your address information before registering.</div>";
     } elseif (!preg_match("/^[A-Za-z0-9_]{3,20}$/", $username)) {
-        $message = "<div class='error-text'>Invalid username format. Username must be 3-20 characters, alphanumeric or underscore.</div>"; // More specific error
+        $message = "<div class='error-text'>Invalid username format. Username must be 3-20 characters, alphanumeric or underscore.</div>";
     } elseif (!preg_match("/^.{6,}$/", $password)) {
         $message = "<div class='error-text'>Password must be at least 6 characters.</div>";
     } elseif ($password !== $confirm_password) {
@@ -66,17 +76,42 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['register'])) {
                         $username, $hashed_password, $email, $contact_number
                     );
                     if ($stmt->execute()) {
-                        $to = $email;
-                        $subject = "Welcome to ETIER – Your Account Has Been Successfully Created!";
-
-                        $body = "
+                        // Email content
+                        $recipient_email = $email; // This is the user's email from the form
+                        $subject = "Welcome to ETIER – Your Account is Ready! 🎉;
+                        
+                        // --- UPDATED EMAIL BODY STYLING ---
+                        $email_body = "
                         <html>
                         <head>
                           <style>
-                            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-                            .header { background-color: #E6BD37; padding: 20px; text-align: center; color: white; }
-                            .content { padding: 20px; }
-                            .footer { font-size: 0.9em; color: #777; text-align: center; padding: 20px; border-top: 1px solid #ddd; margin-top: 30px; }
+                            body { 
+                                font-family: Arial, Helvetica, sans-serif; 
+                                line-height: 1.6; 
+                                color: #333; 
+                            }
+                            .header { 
+                                background-color: #E6BD37; 
+                                padding: 20px; 
+                                text-align: center; 
+                                color: white; 
+                            }
+                            .content { 
+                                padding: 20px; 
+                            }
+                            .footer { 
+                                font-size: 0.9em; 
+                                color: #777; 
+                                text-align: center; 
+                                padding: 20px; 
+                                border-top: 1px solid #ddd; 
+                                margin-top: 30px; 
+                            }
+                            /* Optional: Inline styles for critical elements if needed, though PHPMailer often handles this */
+                            p, ul, li, strong {
+                                font-family: Arial, Helvetica, sans-serif; 
+                                color: #333;
+                            }
                           </style>
                         </head>
                         <body>
@@ -84,7 +119,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['register'])) {
                             <h2>Welcome to ETIER</h2>
                           </div>
                           <div class='content'>
-                            <p>Dear <strong>" . htmlspecialchars($first_name) . "</strong>,</p>
+                            <p>Dear <strong style='font-family: Arial, Helvetica, sans-serif;'>" . htmlspecialchars($first_name) . "</strong>,</p>
                             <p>We’re excited to welcome you to <strong>ETIER</strong> – your go-to destination for stylish, high-quality apparel. Your account has been successfully created.</p>
 
                             <p>As a registered member, you now have access to:</p>
@@ -101,7 +136,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['register'])) {
                             <p>Thank you for choosing Etier. We’re glad to have you with us!</p>
 
                             <p>Warm regards,<br>
-                            <strong>The ETIER Team</strong></p>
+                            <strong>The ETIER Team</strong><br>
+                            Collo, Paul Benedict<br>
+                            Cueto, Alexa Joyce<br>
+                            Pua, Charles Michael<br>
+                            Wei, Wen Xuan</p>
                           </div>
                           <div class='footer'>
                             &copy; 2025 BeyondOne | ETIER Clothing<br>
@@ -110,17 +149,35 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['register'])) {
                         </body>
                         </html>";
 
-                        $headers = "MIME-Version: 1.0\r\n";
-                        $headers .= "Content-type:text/html;charset=UTF-8\r\n";
-                        $headers .= "From: Etier <no-reply@etier-clothing>\r\n";
+                        // PHPMailer setup
+                        $mail = new PHPMailer(true); // Passing `true` enables exceptions
 
-                        if (mail($to, $subject, $body, $headers)) {
+                        try {
+                            //Server settings
+                            $mail->isSMTP();
+                            $mail->Host       = 'smtp.gmail.com';
+                            $mail->SMTPAuth   = true;
+                            $mail->Username   = 'iacedos11@gmail.com';
+                            $mail->Password   = 'jmtipygfrkhamygu';
+                            $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+                            $mail->Port       = 587;
+
+                            //Recipients
+                            $mail->setFrom('iacedos11@gmail.com', 'ETIER Clothing');
+                            $mail->addAddress($recipient_email, htmlspecialchars($first_name . ' ' . $last_name));
+
+                            // Content
+                            $mail->isHTML(true);
+                            $mail->Subject = $subject;
+                            $mail->Body    = $email_body;
+                            $mail->AltBody = strip_tags($email_body); // Plain text alternative
+
+                            $mail->send();
                             $message = "<div class='success'>Registered successfully! A welcome email has been sent to " . htmlspecialchars($email) . ".</div>";
-                            // Redirect after 2 seconds to signin.php
                             echo "<script>setTimeout(function(){ window.location.href = 'signin.php'; }, 2000);</script>";
-                        } else {
-                            $message = "<div class='error-text'>Registered successfully, but failed to send welcome email.</div>";
-                            // Still redirect even if email fails, as registration was successful
+                        } catch (Exception $e) {
+                            $message = "<div class='error-text'>Registered successfully, but failed to send welcome email. Mailer Error: {$mail->ErrorInfo}</div>";
+                            error_log("PHPMailer Error: " . $e->getMessage());
                             echo "<script>setTimeout(function(){ window.location.href = 'signin.php'; }, 2000);</script>";
                         }
                     } else {
@@ -139,7 +196,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['register'])) {
 }
 
 // Include header.php AFTER all potential POST processing and redirects
-// This ensures no "headers already sent" error.
 include 'header.php';
 ?>
 
