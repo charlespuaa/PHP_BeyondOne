@@ -69,7 +69,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['register'])) {
                 </head>
                 <body>
                   <div class='header'>
-                    <h2>Welcome to Etier</h2>
+                    <h2>Welcome to ETIER</h2>
                 </div>
                   <div class='content'>
                     <p>Dear <strong>$first_name</strong>,</p>
