@@ -1,4 +1,10 @@
 <?php
+// Start the session if it hasn't been started already.
+// This is crucial for header.php to correctly access $_SESSION variables
+// on any page it's included, including after redirects.
+if (session_status() == PHP_SESSION_NONE) {
+    session_start();
+}
 
 $currentPage = basename($_SERVER['PHP_SELF']);
 
@@ -203,8 +209,9 @@ $isLoggedIn = isset($_SESSION['user_id']); // Check if a 'user_id' session varia
         font-weight: bold;
         text-decoration: underline;
       }
-    <?php elseif ($isLoggedIn && $currentPage === 'my_profile.php'): // Apply if logged in and on my_profile.php ?>
-      .etier-header .top-bar-right a[href="my_profile.php"] {
+    <?php elseif ($isLoggedIn && ($currentPage === 'profile.php' || $currentPage === 'my_profile.php')): // Apply if logged in and on profile or my_profile page ?>
+      .etier-header .top-bar-right a[href="profile.php"], /* Adjust if you use my_profile.php directly */
+      .etier-header .top-bar-right a[href="my_profile.php"] { /* Keeping both for flexibility */
         color: #e6bd37;
         font-weight: bold;
         text-decoration: underline;
@@ -337,8 +344,7 @@ $isLoggedIn = isset($_SESSION['user_id']); // Check if a 'user_id' session varia
     <div class="top-bar-right">
       <a href="about_us.php">ABOUT US</a>
       <?php if ($isLoggedIn): ?>
-        <a href="profile.php">MY PROFILE</a>
-      <?php else: ?>
+        <a href="profile.php">MY PROFILE</a> <?php else: ?>
         <a href="signin.php">SIGN IN</a>
       <?php endif; ?>
     </div>
@@ -347,7 +353,7 @@ $isLoggedIn = isset($_SESSION['user_id']); // Check if a 'user_id' session varia
   <div class="top-nav">
     <?php
     // Define pages where menu-toggle and main-nav should NOT appear
-    $noNavPages = ['about_us.php', 'signin.php', 'account_info_reg.php', 'personal_info_reg.php', 'address_info_reg.php', 'payment.php', 'my_profile.php']; // Add 'my_profile.php' here
+    $noNavPages = ['about_us.php', 'signin.php', 'account_info_reg.php', 'personal_info_reg.php', 'address_info_reg.php', 'payment.php', 'profile.php', 'about_us.php', 'cart.php']; 
     $showNavAndHamburger = !in_array($currentPage, $noNavPages);
     ?>
 
@@ -384,10 +390,14 @@ $isLoggedIn = isset($_SESSION['user_id']); // Check if a 'user_id' session varia
         $isProductPage = $currentPage === 'product.php';
 
         foreach ($categories as $key => $label) {
+          // Changed to check if the current page is 'product.php' AND 'activeCategory' is set and matches
+          // This ensures the 'active' class is correctly applied based on product category
           if ($isProductPage && isset($activeCategory) && $activeCategory === $key) {
             echo "<span class='active'>$label</span>";
           } else {
-            echo "<a href='#$key' " . (isset($activeCategory) && $activeCategory === $key ? "class='active'" : "") . ">$label</a>";
+            // For general navigation, check if the current page is 'store.php' and the link's hash matches 'current' category from JS
+            // This part might need more robust PHP logic if you want to highlight categories dynamically based on store sections
+            echo "<a href='#$key'>" . $label . "</a>"; // Removed the dynamic active class for non-product pages here as it's handled by JS
           }
         }
       ?>
@@ -419,8 +429,12 @@ $isLoggedIn = isset($_SESSION['user_id']); // Check if a 'user_id' session varia
 
     navLinks.forEach(link => {
       link.addEventListener('click', function () {
-        navLinks.forEach(l => l.classList.remove('active'));
-        this.classList.add('active');
+        // Only remove active class from other links if on store.php and section navigation is relevant
+        if ('<?= $currentPage ?>' === 'store.php') {
+            navLinks.forEach(l => l.classList.remove('active'));
+            this.classList.add('active');
+        }
+        
         if (mainNav && mainNav.classList.contains('active')) {
           mainNav.classList.remove('active');
           const icon = menuToggle.querySelector('i');
@@ -430,31 +444,38 @@ $isLoggedIn = isset($_SESSION['user_id']); // Check if a 'user_id' session varia
       });
     });
 
-    window.addEventListener('scroll', () => {
-      let current = '';
-      sections.forEach(section => {
-        const el = document.getElementById(section);
-        if (el) {
-          const sectionTop = el.offsetTop - 150;
-          if (scrollY >= sectionTop) {
-            current = section;
-          }
-        }
-      });
+    // Only apply scroll logic if on store.php
+    if ('<?= $currentPage ?>' === 'store.php') {
+        window.addEventListener('scroll', () => {
+            let current = '';
+            sections.forEach(section => {
+                const el = document.getElementById(section);
+                if (el) {
+                    const sectionTop = el.offsetTop - 150; // Offset for fixed header
+                    // Use a small buffer to ensure the correct section is highlighted when entering its view
+                    if (scrollY >= sectionTop && scrollY < el.offsetTop + el.offsetHeight - 150) { 
+                        current = section;
+                    }
+                }
+            });
 
-      navLinks.forEach(link => {
-        link.classList.remove('active');
-        if (link.getAttribute('href') === '#' + current) {
-          link.classList.add('active');
-        }
-      });
-    });
+            navLinks.forEach(link => {
+                link.classList.remove('active');
+                if (link.getAttribute('href') === '#' + current) {
+                    link.classList.add('active');
+                }
+            });
+        });
+    }
+
 
     // New: JavaScript for Rotating Text
     const rotatingTextItems = document.querySelectorAll('.rotating-text-item');
     let currentTextIndex = 0;
 
     function showNextText() {
+        if (rotatingTextItems.length === 0) return; // Prevent error if no items
+
         rotatingTextItems[currentTextIndex].classList.remove('active');
         currentTextIndex = (currentTextIndex + 1) % rotatingTextItems.length;
         rotatingTextItems[currentTextIndex].classList.add('active');

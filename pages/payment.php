@@ -1,386 +1,346 @@
+<?php include 'header.php';
+?>
 <?php
-session_start();
+// No need for session_start() here, as it's handled by header.php
+include '../db.php'; // Include your database connection (still needed for cart items)
 
-if (empty($_SESSION['cart'])) {
-    header("Location: store.php");
-    exit;
+// Redirect to signin.php if user is not logged in
+if (!isset($_SESSION['user_id'])) {
+    header('Location: signin.php');
+    exit();
 }
 
-$host = 'localhost';
-$db   = 'etierreg';
-$user = 'root';
-$pass = '';
+$user_id = $_SESSION['user_id'];
+$cart_items = [];
+$total_price = 0;
 
-$conn = new mysqli($host, $user, $pass, $db);
-if ($conn->connect_error) die("Connection failed: " . $conn->connect_error);
+// Fetch cart items for the current user to display in the order summary
+$sql = "SELECT c.id as cart_item_id, p.id as product_id, p.name, p.price, p.image, p.hover_image, c.quantity, c.size
+        FROM cart c
+        JOIN products p ON c.product_id = p.id
+        WHERE c.user_id = ? ORDER BY c.added_at DESC";
+$stmt = $conn->prepare($sql);
+$stmt->bind_param("i", $user_id);
+$stmt->execute();
+$result = $stmt->get_result();
 
-$cart = $_SESSION['cart'];
-$total = 0;
-$subtotal = 0;
-$tax = 0;
-$grand_total = 0;
-
-foreach ($cart as $id => $item) {
-    $subtotal += $item['price'] * $item['quantity'];
+while ($row = $result->fetch_assoc()) {
+    $cart_items[] = $row;
+    $total_price += $row['price'] * $row['quantity'];
 }
-$tax = $subtotal * 0.12;
-$grand_total = $subtotal + $tax;
+$stmt->close();
 
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $card_name = $_POST['card_name'];
-    $card_number = $_POST['card_number'];
-    $expiry = $_POST['expiry'];
-    $cvv = $_POST['cvv'];
-    $email = $_POST['email'];
-    
-    $stmt = $conn->prepare("INSERT INTO orders (card_name, card_number, expiry, cvv, email, amount) VALUES (?, ?, ?, ?, ?, ?)");
-    $stmt->bind_param("sssssd", $card_name, $card_number, $expiry, $cvv, $email, $grand_total);
-    
-    if ($stmt->execute()) {
-        $order_id = $stmt->insert_id;
-        foreach ($cart as $id => $item) {
-            $stmt2 = $conn->prepare("INSERT INTO order_items (order_id, product_id, quantity, price) VALUES (?, ?, ?, ?)");
-            $stmt2->bind_param("iiid", $order_id, $id, $item['quantity'], $item['price']);
-            $stmt2->execute();
-            $stmt2->close();
-        }
-        
-        // 完全复制自 account_info_reg.php 的邮件发送逻辑
-        $to = $email;
-        $subject = "Etier Order Confirmation #$order_id";
-        $body = "<html><body>";
-        $body .= "<h3>Hello $card_name!</h3>";
-        $body .= "<p>Thank you for your order at Etier! Your order number is <strong>#$order_id</strong>.</p>";
-        $body .= "<p>Order Details:</p>";
-        $body .= "<ul>";
-        foreach ($cart as $id => $item) {
-            $body .= "<li>{$item['name']} - Quantity: {$item['quantity']} - Price: ₱".number_format($item['price']*$item['quantity'],2)."</li>";
-        }
-        $body .= "</ul>";
-        $body .= "<p><strong>Total Amount: ₱".number_format($grand_total,2)."</strong></p>";
-        $body .= "<p>We will process your order shortly. If you have any questions, please contact us at etiercustomerservice@gmail.com.</p>";
-        $body .= "</body></html>";
-        
-        $headers = "MIME-Version: 1.0\r\n";
-        $headers .= "Content-type:text/html;charset=UTF-8\r\n";
-        $headers .= "From: Etier <no-reply@etier.com>\r\n";
+// If cart is empty, redirect back to cart page or store
+if (empty($cart_items)) {
+    header('Location: cart.php');
+    exit();
+}
 
-        if (mail($to, $subject, $body, $headers)) {
-            $_SESSION['order_email'] = true;
-        } else {
-            $_SESSION['order_email'] = false;
-        }
-        
-        $_SESSION['cart'] = [];
-        $_SESSION['order_id'] = $order_id;
-        header("Location: confirmation.php");
-        exit;
+// --- Handle Payment Submission (Form Processing) ---
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'process_payment') {
+    // Get form data
+    $shipping_address = htmlspecialchars($_POST['shipping_address'] ?? '');
+    $phone_number = htmlspecialchars($_POST['phone_number'] ?? '');
+    $email_address_for_invoice = htmlspecialchars($_POST['email'] ?? '');
+    $payment_method = htmlspecialchars($_POST['payment_method'] ?? 'Credit Card');
+
+    // In this simplified version, we just proceed to email sending and confirmation.
+    // No database transactions for orders or stock management.
+
+    // --- Send Invoice Email ---
+    $to = $email_address_for_invoice;
+    $subject = "Etier Clothing - Order Confirmation"; // No order ID from DB in this simplified version
+
+    $message = "Dear Customer,\n\n";
+    $message .= "Thank you for your order with Etier Clothing! Your order details are below.\n\n";
+    $message .= "Order Summary:\n";
+    $message .= "Total Amount: ₱" . number_format($total_price, 2) . "\n";
+    $message .= "Payment Method: " . $payment_method . "\n";
+    $message .= "Shipping Address: " . $shipping_address . "\n";
+    $message .= "Phone Number: " . $phone_number . "\n\n";
+
+    $message .= "Items Ordered:\n";
+    foreach ($cart_items as $item) {
+        $message .= "- " . $item['name'] . " (Size: " . $item['size'] . ", Qty: " . $item['quantity'] . ") - ₱" . number_format($item['price'] * $item['quantity'], 2) . "\n";
     }
-    $stmt->close();
+    $message .= "\nWe will process your order shortly and send further updates.\n\n";
+    $message .= "Thank you for shopping with Etier!\n";
+    $message .= "Etier Clothing Team\n";
+
+    $headers = "From: no-reply@etier-apparel.my-style.in\r\n"; // IMPORTANT: Replace with your actual domain's email address
+    $headers .= "Reply-To: no-reply@etier-apparel.my-style.in\r\n"; // IMPORTANT: Replace with your actual domain's email address
+    $headers .= "Content-Type: text/plain; charset=UTF-8\r\n";
+
+    // Attempt to send the email
+    // Note: Free hosting providers like InfinityFree may have restrictions or disable PHP's mail() function.
+    // For reliable email delivery in a production environment, consider using an SMTP service (e.g., SendGrid, Mailgun)
+    // with a library like PHPMailer.
+    if (!mail($to, $subject, $message, $headers)) {
+        error_log("Failed to send order confirmation email to " . $to);
+        // You might want to display a message to the user that email sending failed
+        // For this simplified version, we'll proceed to the confirmation page regardless.
+    }
+
+    // Optionally, clear the cart after "successful" order placement
+    $clear_cart_stmt = $conn->prepare("DELETE FROM cart WHERE user_id = ?");
+    $clear_cart_stmt->bind_param("i", $user_id);
+    $clear_cart_stmt->execute();
+    $clear_cart_stmt->close();
+
+    // Redirect to order placed confirmation page
+    header('Location: order_placed.php'); // You'll need to create this page
+    exit();
 }
 
-include 'header.php';
+$conn->close();
 ?>
 
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Payment | Etier</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Checkout | Etier</title>
     <style>
         body {
             font-family: 'Proxima Nova', sans-serif;
-            background: #fff9f9ff;
-            color: #333;
-            padding-top: 200px;
-        }
-
-        .payment-container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 20px;
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 40px;
-        }
-
-        @media (max-width: 768px) {
-            .payment-container {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        .payment-section {
-            background: #fff;
-            border-radius: 8px;
-            padding: 30px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
-        }
-
-        .section-title {
-            font-size: 1.8em;
-            font-weight: bold;
-            color: #E6BD37;
-            margin-bottom: 25px;
-            border-bottom: 1px solid #eee;
-            padding-bottom: 15px;
-        }
-
-        .payment-form label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 500;
-        }
-
-        .payment-form input {
-            width: 100%;
-            padding: 12px;
-            margin-bottom: 20px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            font-size: 1em;
-        }
-
-        .card-group {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-        }
-
-        .order-summary-item {
+            background-color: #ffffffff;
+            margin: 0;
+            padding: 0;
             display: flex;
-            justify-content: space-between;
-            padding: 15px 0;
-            border-bottom: 1px solid #eee;
+            flex-direction: column;
+            min-height: 100vh;
         }
-
-        .order-summary-item:last-child {
+        .page-content {
+            flex: 1;
+            padding-top: 130px; /* Adjust based on header height */
+            padding-bottom: 90px;
+        }
+        .checkout-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            display: flex;
+            flex-wrap: wrap;
+            gap: 30px;
+        }
+        .checkout-header {
+            width: 100%;
+            font-size: 28px;
+            font-weight: bold;
+            margin-bottom: 30px;
+            text-align: center;
+            color: #333;
+        }
+        .order-summary-section, .payment-details-section {
+            flex: 1;
+            min-width: 300px; /* Ensures columns don't get too narrow */
+        }
+        .section-title {
+            font-size: 22px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            color: #E6BD37;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+        }
+        .order-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px dashed #eee;
+        }
+        .order-item:last-child {
             border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
         }
-
-        .item-image {
-            width: 70px;
-            height: 70px;
+        .order-item-image {
+            width: 60px;
+            height: 60px;
             object-fit: cover;
             border-radius: 4px;
+            border: 1px solid #ddd;
         }
-
-        .item-details {
-            flex: 1;
-            padding: 0 15px;
+        .order-item-info {
+            flex-grow: 1;
         }
-
-        .item-name {
+        .order-item-name {
             font-weight: bold;
-            font-size: 1em;
-            margin-bottom: 5px;
+            font-size: 16px;
         }
-
-        .item-price {
-            color: #555;
+        .order-item-details {
+            font-size: 13px;
+            color: #666;
         }
-
-        .item-quantity {
-            color: #777;
-        }
-
-        .order-totals {
+        .order-total-summary {
             margin-top: 20px;
             padding-top: 20px;
-            border-top: 1px solid #eee;
+            border-top: 2px solid #E6BD37;
+            font-size: 20px;
+            font-weight: bold;
+            text-align: right;
         }
-
-        .total-row {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 10px;
+        .form-group {
+            margin-bottom: 20px;
         }
-
-        .total-label {
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
             color: #555;
         }
-
-        .total-value {
-            font-weight: bold;
-        }
-
-        .grand-total {
-            font-size: 1.2em;
-            margin-top: 15px;
-            padding-top: 15px;
-            border-top: 1px solid #eee;
-        }
-
-        .btn-pay {
-            background: #E6BD37;
-            color: #000;
-            border: none;
-            padding: 15px;
-            font-size: 1.1em;
-            font-weight: bold;
-            border-radius: 4px;
-            cursor: pointer;
+        .form-group input[type="text"],
+        .form-group input[type="email"],
+        .form-group input[type="tel"],
+        .form-group textarea,
+        .form-group select {
             width: 100%;
-            margin-top: 20px;
-            transition: background 0.3s;
-        }
-
-        .btn-pay:hover {
-            background: #d9aa2f;
-        }
-
-        .payment-methods {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 10px;
-            margin-top: 20px;
-        }
-
-        .payment-method {
-            border: 1px solid #ddd;
+            padding: 12px;
+            border: 1px solid #ccc;
             border-radius: 4px;
-            padding: 10px;
-            text-align: center;
+            font-size: 16px;
+            box-sizing: border-box; /* Include padding in width */
+        }
+        .form-group textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+        .payment-options {
+            margin-top: 20px;
+            margin-bottom: 30px;
+        }
+        .payment-option {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .payment-option input[type="radio"] {
+            margin-right: 10px;
+        }
+        .place-order-btn {
+            background: black;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-weight: bold;
+            border-radius: 4px;
             cursor: pointer;
-            transition: all 0.3s;
+            transition: background-color 0.3s ease;
+            width: 100%;
+            font-size: 18px;
+        }
+        .place-order-btn:hover {
+            background-color: #E6BD37;
+        }
+        .error-message {
+            color: #dc3545;
+            text-align: center;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+        .email-invoice-note {
+            font-size: 0.9em;
+            color: #888;
+            margin-top: 5px;
+            display: block;
+            font-weight: normal; /* Override bold from label */
         }
 
-        .payment-method.active {
-            border-color: #E6BD37;
-            background: rgba(230, 189, 55, 0.1);
-        }
-
-        .payment-method img {
-            max-width: 50px;
-            height: auto;
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .page-content {
+                padding-top: 220px; /* Adjust for mobile header height */
+            }
+            .checkout-container {
+                flex-direction: column;
+                padding: 20px;
+                margin: 0 15px;
+            }
+            .order-summary-section, .payment-details-section {
+                min-width: unset; /* Remove min-width on small screens */
+                width: 100%;
+            }
+            .section-title {
+                text-align: center;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="payment-container">
-        <div class="payment-section">
-            <h2 class="section-title">Payment Information</h2>
-            <form method="post" class="payment-form">
-                <div class="card-group">
-                    <div>
-                        <label for="card_name">Cardholder Name</label>
-                        <input type="text" id="card_name" name="card_name" required>
+    <div class="page-content">
+        <div class="checkout-container">
+            <h1 class="checkout-header">Checkout</h1>
+
+            <?php if (isset($_GET['error']) && $_GET['error'] === 'payment_failed'): ?>
+                <p class="error-message">Payment failed. Please try again or choose a different method.</p>
+            <?php endif; ?>
+
+            <div class="order-summary-section">
+                <h2 class="section-title">Order Summary</h2>
+                <?php if (empty($cart_items)): ?>
+                    <p class="empty-cart-message" style="text-align: left; font-size: 1em; color: #555;">Your cart is empty. Please add items to proceed.</p>
+                <?php else: ?>
+                    <?php foreach ($cart_items as $item): ?>
+                        <div class="order-item">
+                            <img src="../assets/<?= htmlspecialchars($item['image']) ?>" alt="<?= htmlspecialchars($item['name']) ?>" class="order-item-image">
+                            <div class="order-item-info">
+                                <div class="order-item-name"><?= htmlspecialchars($item['name']) ?></div>
+                                <div class="order-item-details">
+                                    Quantity: <?= $item['quantity'] ?> | Size: <?= htmlspecialchars($item['size']) ?> | ₱<?= number_format($item['price'], 2) ?> each
+                                </div>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                    <div class="order-total-summary">
+                        Total: ₱<?= number_format($total_price, 2) ?>
                     </div>
-                    <div>
-                        <label for="card_number">Card Number</label>
-                        <input type="text" id="card_number" name="card_number" placeholder="XXXX XXXX XXXX XXXX" required>
+                <?php endif; ?>
+            </div>
+
+            <div class="payment-details-section">
+                <h2 class="section-title">Shipping & Payment</h2>
+                <form action="payment.php" method="POST">
+                    <input type="hidden" name="action" value="process_payment">
+
+                    <div class="form-group">
+                        <label for="shipping_address">Shipping Address:</label>
+                        <textarea id="shipping_address" name="shipping_address" rows="3" required placeholder="Enter your full shipping address"></textarea>
                     </div>
-                </div>
-                
-                <div class="card-group">
-                    <div>
-                        <label for="expiry">Expiry Date</label>
-                        <input type="text" id="expiry" name="expiry" placeholder="MM/YY" required>
+
+                    <div class="form-group">
+                        <label for="phone_number">Phone Number:</label>
+                        <input type="tel" id="phone_number" name="phone_number" required placeholder="e.g., +639123456789">
                     </div>
-                    <div>
-                        <label for="cvv">CVV</label>
-                        <input type="text" id="cvv" name="cvv" placeholder="123" required>
+
+                    <div class="form-group">
+                        <label for="email">Email Address:</label>
+                        <input type="email" id="email" name="email" required placeholder="your.email@example.com">
+                        <small class="email-invoice-note">Your invoice and order updates will be sent to this email address.</small>
                     </div>
-                </div>
-                
-                <label for="email">Email for Order Confirmation</label>
-                <input type="email" id="email" name="email" required value="<?= isset($_SESSION['user_email']) ? $_SESSION['user_email'] : '' ?>">
-                
-                <h3 style="margin-top: 20px; margin-bottom: 15px;">Payment Method</h3>
-                <div class="payment-methods">
-                    <div class="payment-method active">
-                        <img src="../assets/visa.png" alt="Visa">
+
+                    <div class="form-group">
+                        <label for="payment_method_select">Payment Method:</label>
+                        <select id="payment_method_select" name="payment_method" required>
+                            <option value="">Select a method</option>
+                            <option value="Credit Card">Credit Card</option>
+                            <option value="PayPal">PayPal</option>
+                            <option value="Bank Transfer">Bank Transfer</option>
+                            <option value="Cash on Delivery">Cash on Delivery (COD)</option>
+                        </select>
                     </div>
-                    <div class="payment-method">
-                        <img src="../assets/mastercard.png" alt="Mastercard">
-                    </div>
-                    <div class="payment-method">
-                        <img src="../assets/amex.png" alt="American Express">
-                    </div>
-                    <div class="payment-method">
-                        <img src="../assets/paypal.png" alt="PayPal">
-                    </div>
-                </div>
-                
-                <button type="submit" class="btn-pay">Pay ₱<?= number_format($grand_total, 2) ?></button>
-            </form>
-        </div>
-        
-        <div class="payment-section">
-            <h2 class="section-title">Order Summary</h2>
-            
-            <?php foreach ($cart as $id => $item): ?>
-                <div class="order-summary-item">
-                    <img src="../assets/<?= $item['image'] ?>" alt="<?= $item['name'] ?>" class="item-image">
-                    <div class="item-details">
-                        <div class="item-name"><?= $item['name'] ?></div>
-                        <div class="item-price">₱<?= number_format($item['price'], 2) ?></div>
-                    </div>
-                    <div class="item-quantity">
-                        x <?= $item['quantity'] ?>
-                    </div>
-                    <div class="item-subtotal">
-                        ₱<?= number_format($item['subtotal'], 2) ?>
-                    </div>
-                </div>
-            <?php endforeach; ?>
-            
-            <div class="order-totals">
-                <div class="total-row">
-                    <span class="total-label">Subtotal</span>
-                    <span class="total-value">₱<?= number_format($subtotal, 2) ?></span>
-                </div>
-                <div class="total-row">
-                    <span class="total-label">Shipping</span>
-                    <span class="total-value">Free</span>
-                </div>
-                <div class="total-row">
-                    <span class="total-label">Tax (12%)</span>
-                    <span class="total-value">₱<?= number_format($tax, 2) ?></span>
-                </div>
-                <div class="total-row grand-total">
-                    <span class="total-label">Total</span>
-                    <span class="total-value">₱<?= number_format($grand_total, 2) ?></span>
-                </div>
+
+                    <button type="submit" class="place-order-btn">Place Order</button>
+                </form>
             </div>
         </div>
     </div>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const paymentMethods = document.querySelectorAll('.payment-method');
-            paymentMethods.forEach(method => {
-                method.addEventListener('click', function() {
-                    paymentMethods.forEach(m => m.classList.remove('active'));
-                    this.classList.add('active');
-                });
-            });
-            
-            document.getElementById('card_number').addEventListener('input', function(e) {
-                let value = e.target.value.replace(/\s+/g, '').replace(/[^0-9]/gi, '');
-                let formatted = '';
-                
-                for (let i = 0; i < value.length; i++) {
-                    if (i > 0 && i % 4 === 0) formatted += ' ';
-                    formatted += value[i];
-                }
-                
-                e.target.value = formatted;
-            });
-            
-            document.getElementById('expiry').addEventListener('input', function(e) {
-                let value = e.target.value.replace(/\s+/g, '').replace(/[^0-9]/gi, '');
-                let formatted = '';
-                
-                for (let i = 0; i < value.length; i++) {
-                    if (i === 2) formatted += '/';
-                    formatted += value[i];
-                }
-                
-                e.target.value = formatted;
-            });
-        });
-    </script>
+    <?php include 'footer.php'; ?>
 </body>
-<footer><?php include 'footer.php'; ?></footer>
 </html>

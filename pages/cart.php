@@ -1,17 +1,25 @@
 <?php
-session_start(); // Start session to check login status
-include '../db.php'; // Include your database connection
+session_start();
+include 'header.php';
+include '../db.php';
 
-// Redirect to signin.php if user is not logged in
-if (!isset($_SESSION['user_id'])) {
-    header('Location: signin.php');
-    exit();
+// Check if user is logged in
+$is_logged_in = isset($_SESSION['user_id']);
+
+// Redirect to signin.php if user is not logged in and is trying to access cart actions or payment
+if (!$is_logged_in) {
+    // If they were trying to add to cart or buy now from product.php
+    if (($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['action']) && $_POST['action'] === 'add_to_cart')) || isset($_GET['redirect_to_payment'])) {
+        header('Location: signin.php');
+        exit();
+    }
+    // If they directly accessed cart.php and are not logged in, they'll see the "Sign In to View Cart" message
 }
 
-$user_id = $_SESSION['user_id'];
+$user_id = $is_logged_in ? $_SESSION['user_id'] : null; // Set user_id only if logged in
 
-// Handle adding to cart (from product.php POST request)
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'add_to_cart') {
+// Handle adding to cart (from product.php POST request) - only if logged in
+if ($is_logged_in && $_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'add_to_cart') {
     $product_id = intval($_POST['product_id']);
     $size = htmlspecialchars($_POST['size']);
     $quantity = intval($_POST['quantity']);
@@ -44,24 +52,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     }
     $stmt->close();
 
-    // Redirect to cart.php to prevent re-submission on refresh
-    header('Location: cart.php');
-    exit();
+    // After adding to cart, check if the "Buy Now" button triggered this action
+    if (isset($_GET['redirect_to_payment']) && $_GET['redirect_to_payment'] === 'true') {
+        header('Location: payment.php');
+        exit();
+    } else {
+        // Redirect to cart.php to prevent re-submission on refresh for "Add to Bag"
+        header('Location: cart.php');
+        exit();
+    }
 }
 
-// Handle updating item quantity in cart
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'update_quantity') {
+// updating item quantity in cart - only if logged in
+if ($is_logged_in && $_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'update_quantity') {
     $cart_item_id = intval($_POST['cart_item_id']);
     $new_quantity = intval($_POST['quantity']);
 
     if ($new_quantity <= 0) {
-        // If quantity is 0 or less, remove the item
+        // pag quantity is 0 or less, remove the item
         $delete_stmt = $conn->prepare("DELETE FROM cart WHERE id = ? AND user_id = ?");
         $delete_stmt->bind_param("ii", $cart_item_id, $user_id);
         $delete_stmt->execute();
         $delete_stmt->close();
     } else {
-        // Update quantity
+        // update quantity
         $update_stmt = $conn->prepare("UPDATE cart SET quantity = ? WHERE id = ? AND user_id = ?");
         $update_stmt->bind_param("iii", $new_quantity, $cart_item_id, $user_id);
         $update_stmt->execute();
@@ -71,8 +85,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     exit();
 }
 
-// Handle removing item from cart
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'remove_item') {
+// removing item from cart - only if logged in
+if ($is_logged_in && $_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'remove_item') {
     $cart_item_id = intval($_POST['cart_item_id']);
     $delete_stmt = $conn->prepare("DELETE FROM cart WHERE id = ? AND user_id = ?");
     $delete_stmt->bind_param("ii", $cart_item_id, $user_id);
@@ -83,24 +97,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
 }
 
 
-// Fetch cart items for the current user
+// fetch cart items for the current user - only if logged in
 $cart_items = [];
 $total_price = 0;
 
-$sql = "SELECT c.id as cart_item_id, p.id as product_id, p.name, p.price, p.image, p.hover_image, c.quantity, c.size
-        FROM cart c
-        JOIN products p ON c.product_id = p.id
-        WHERE c.user_id = ? ORDER BY c.added_at DESC";
-$stmt = $conn->prepare($sql);
-$stmt->bind_param("i", $user_id);
-$stmt->execute();
-$result = $stmt->get_result();
+if ($is_logged_in) {
+    $sql = "SELECT c.id as cart_item_id, p.id as product_id, p.name, p.price, p.image, p.hover_image, c.quantity, c.size
+            FROM cart c
+            JOIN products p ON c.product_id = p.id
+            WHERE c.user_id = ? ORDER BY c.added_at DESC";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("i", $user_id);
+    $stmt->execute();
+    $result = $stmt->get_result();
 
-while ($row = $result->fetch_assoc()) {
-    $cart_items[] = $row;
-    $total_price += $row['price'] * $row['quantity'];
+    while ($row = $result->fetch_assoc()) {
+        $cart_items[] = $row;
+        $total_price += $row['price'] * $row['quantity'];
+    }
+    $stmt->close();
 }
-$stmt->close();
+
 $conn->close();
 ?>
 
@@ -110,11 +127,11 @@ $conn->close();
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Your Cart | Etier</title>
-    <?php include 'header.php'; // Include your header.php which contains the styling ?>
     <style>
+        /* Your existing CSS here */
         body {
             font-family: 'Proxima Nova', sans-serif;
-            background-color: #f9f9f9;
+            background-color: #ffffffff;
             margin: 0;
             padding: 0;
             display: flex;
@@ -123,7 +140,7 @@ $conn->close();
         }
         .page-content {
             flex: 1;
-            padding-top: 180px; /* Adjust based on header height */
+            padding-top: 130px; /* Adjust based on header height */
             padding-bottom: 90px;
         }
         .cart-container {
@@ -225,6 +242,10 @@ $conn->close();
             width: 100%;
             font-size: 18px;
         }
+        .checkout-btn a {
+            color: white;
+            text-decoration: none;
+        }
         .checkout-btn:hover {
             background-color: #E6BD37;
         }
@@ -234,7 +255,17 @@ $conn->close();
             color: #777;
             padding: 50px 0;
         }
-
+        .login-prompt {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 18px;
+            color: #555;
+        }
+        .login-prompt a {
+            color: #E6BD37;
+            font-weight: bold;
+            text-decoration: underline;
+        }
         /* Responsive adjustments */
         @media (max-width: 768px) {
             .page-content {
@@ -284,7 +315,14 @@ $conn->close();
         <div class="cart-container">
             <h1 class="cart-header">Your Shopping Cart</h1>
 
-            <?php if (empty($cart_items)): ?>
+            <?php if (!$is_logged_in): ?>
+                <p class="empty-cart-message">
+                    Ready to shop? Sign in to view and manage your cart! 🛍️
+                </p>
+                <p class="login-prompt">
+                    <a href="signin.php">Sign In Now</a> or <a href="personal_info_reg.php">Register</a>
+                </p>
+            <?php elseif (empty($cart_items)): ?>
                 <p class="empty-cart-message">Your cart is empty. Start shopping!</p>
             <?php else: ?>
                 <?php foreach ($cart_items as $item): ?>
@@ -313,12 +351,12 @@ $conn->close();
 
                 <div class="cart-summary">
                     <div class="cart-total">Total: ₱<?= number_format($total_price, 2) ?></div>
-                    <button class="checkout-btn">Proceed to Checkout</button>
+                    <button class="checkout-btn" onclick="window.location.href='payment.php'"> Proceed to Checkout </button>
                 </div>
             <?php endif; ?>
         </div>
     </div>
 
-    <?php include 'footer.php'; // Assuming you have a footer.php ?>
+    <?php include 'footer.php'; ?>
 </body>
 </html>

@@ -1,3 +1,4 @@
+<?php include 'header.php'; ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -201,7 +202,6 @@
 
 <body>
 
-  <?php include 'header.php'; ?>
 
   <img src="../assets/about_etier_banner.png" alt="About Etier Banner" class="about-banner-image"/>
 

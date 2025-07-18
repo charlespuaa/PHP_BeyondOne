@@ -1,24 +1,33 @@
 <?php
 session_start();
 
+// Database connection details
 $host = 'localhost';
-$db   = 'etierproducts'; 
+$db   = 'etierproducts'; // Confirmed to be 'etierproducts'
 $user = 'root';
 $pass = '';
 
 $conn = new mysqli($host, $user, $pass, $db);
-if ($conn->connect_error) die("Connection failed: " . $conn->connect_error);
+if ($conn->connect_error) {
+    die("Connection failed: " . $conn->connect_error);
+}
 
 $error_message = "";
 
+// Check for and clear login error cookie
 if (isset($_COOKIE['login_error'])) {
     $error_message = $_COOKIE['login_error'];
-    setcookie('login_error', '', time() - 3600, "/"); // Clear the cookie
+    setcookie('login_error', '', time() - 3600, "/"); // Clear the cookie by setting its expiration to the past
 }
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $username = trim($_POST['username']);
     $password = $_POST['password'];
+
+    // --- DEBUGGING START ---
+    echo "<h2>DEBUGGING LOGIN PROCESS</h2>";
+    echo "<p>Attempting login for username: <strong>" . htmlspecialchars($username) . "</strong></p>";
+    // --- DEBUGGING END ---
 
     $stmt = $conn->prepare("SELECT id, password FROM users WHERE username = ?");
     if ($stmt) {
@@ -26,32 +35,77 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $stmt->execute();
         $stmt->store_result();
 
+        // --- DEBUGGING START ---
+        echo "<p>SQL query prepared and executed. Number of rows found: <strong>" . $stmt->num_rows . "</strong></p>";
+        // --- DEBUGGING END ---
+
         if ($stmt->num_rows == 1) {
             $stmt->bind_result($user_id, $hashed_password);
             $stmt->fetch();
+
+            // --- DEBUGGING START ---
+            echo "<p>User found in DB. User ID: <strong>" . $user_id . "</strong></p>";
+            echo "<p>Hashed password from DB: <strong>" . htmlspecialchars($hashed_password) . "</strong></p>";
+            echo "<p>Password entered (for comparison, DO NOT DISPLAY IN PRODUCTION): <strong>" . htmlspecialchars($password) . "</strong></p>";
+            // --- DEBUGGING END ---
+
             if (password_verify($password, $hashed_password)) {
+                // --- DEBUGGING START ---
+                echo "<p style='color: green; font-weight: bold;'>Password verified successfully!</p>";
+                // --- DEBUGGING END ---
+
                 $_SESSION['user_id'] = $user_id;
                 $_SESSION['username'] = $username;
-                header("Location: store.php");
-                exit;
+
+                // --- DEBUGGING START ---
+                echo "<p>Session user_id set to: <strong>" . $_SESSION['user_id'] . "</strong></p>";
+                echo "<p>Session username set to: <strong>" . $_SESSION['username'] . "</strong></p>";
+                echo "<p style='color: blue;'>Redirecting to store.php...</p>";
+                // If you want to see the debug messages, TEMPORARILY comment out the header() and exit; lines below
+                // then uncomment them to resume normal behavior.
+                // sleep(2); // Optional: pause for 2 seconds to see messages before redirect
+                // --- DEBUGGING END ---
+
+                $stmt->close();
+                $conn->close(); // Close connection before redirect
+                header("Location: store.php"); // Redirect to store page on successful login
+                exit; // Important: terminate script after redirect
             } else {
-                setcookie("login_error", "Invalid password.", 0, "/");
-                header("Location: " . $_SERVER['PHP_SELF']);
-                exit;
+                // --- DEBUGGING START ---
+                echo "<p style='color: red; font-weight: bold;'>Password verification FAILED.</p>";
+                echo "<p style='color: blue;'>Redirecting back to signin.php (due to invalid password)...</p>";
+                // --- DEBUGGING END ---
+                $stmt->close();
+                $conn->close(); // Close connection before redirect
+                setcookie("login_error", "Invalid password.", 0, "/"); // Set error cookie
+                header("Location: " . $_SERVER['PHP_SELF']); // Redirect back to signin page
+                exit; // Important: terminate script after redirect
             }
         } else {
-            setcookie("login_error", "Username not found.", 0, "/");
-            header("Location: " . $_SERVER['PHP_SELF']);
-            exit;
+            // --- DEBUGGING START ---
+            echo "<p style='color: red; font-weight: bold;'>Username not found in the database.</p>";
+            echo "<p style='color: blue;'>Redirecting back to signin.php (due to username not found)...</p>";
+            // --- DEBUGGING END ---
+            $stmt->close();
+            $conn->close(); // Close connection before redirect
+            setcookie("login_error", "Username not found.", 0, "/"); // Set error cookie
+            header("Location: " . $_SERVER['PHP_SELF']); // Redirect back to signin page
+            exit; // Important: terminate script after redirect
         }
-        $stmt->close();
     } else {
-        setcookie("login_error", "Database error: {$conn->error}", 0, "/");
-        header("Location: " . $_SERVER['PHP_SELF']);
-        exit;
+        // --- DEBUGGING START ---
+        echo "<p style='color: red; font-weight: bold;'>Database prepare error: " . htmlspecialchars($conn->error) . "</p>";
+        echo "<p style='color: blue;'>Redirecting back to signin.php (due to database error)...</p>";
+        // --- DEBUGGING END ---
+        $conn->close(); // Close connection before redirect
+        setcookie("login_error", "Database error: {$conn->error}", 0, "/"); // Set error cookie
+        header("Location: " . $_SERVER['PHP_SELF']); // Redirect back to signin page
+        exit; // Important: terminate script after redirect
     }
 }
 
+// Include header.php AFTER all potential header() redirects
+// This is the crucial change to prevent "headers already sent" error.
 include 'header.php';
 ?>
 
