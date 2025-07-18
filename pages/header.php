@@ -96,7 +96,7 @@ $isLoggedIn = isset($_SESSION['user_id']); // Check if a 'user_id' session varia
 
     .etier-header .top-bar-right {
       display: flex;
-      gap: 12px;
+      gap: 10px;
       font-size: 15px;
       flex-shrink: 1;
       z-index: 10;
@@ -105,7 +105,7 @@ $isLoggedIn = isset($_SESSION['user_id']); // Check if a 'user_id' session varia
 
     .etier-header .top-bar-right a {
       color: #FFF;
-      font-weight: 600;
+      font-weight: 400;
       text-decoration: none;
     }
 

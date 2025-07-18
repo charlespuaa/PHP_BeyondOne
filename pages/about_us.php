@@ -19,7 +19,7 @@
       background: #fff9f9ff;
       color: #333;
       line-height: 1.6;
-      padding-top: 150px;
+      padding-top: 100px;
       margin: 0;
     }
 

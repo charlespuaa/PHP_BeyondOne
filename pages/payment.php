@@ -31,7 +31,7 @@ while ($row = $result->fetch_assoc()) {
 $stmt->close();
 
 // If cart is empty, redirect back to cart page or store
-if (empty($cart_items)) {
+if (empty($cart_items)) { 
     header('Location: cart.php');
     exit();
 }

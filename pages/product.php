@@ -1,9 +1,6 @@
 <?php
 session_start(); // Start the session at the very beginning of product.php
-include '../db.php';
-
-// Check if user is logged in
-$is_logged_in = isset($_SESSION['user_id']);
+include '../db.php'; // Ensure this path is correct for your setup
 
 if (!isset($_GET['id'])) {
     die('Product ID missing.');
@@ -12,7 +9,7 @@ if (!isset($_GET['id'])) {
 $id = intval($_GET['id']);
 $view = $_GET['view'] ?? 'front';
 
-$sql = "SELECT * FROM products WHERE id = $id LIMIT 1";
+$sql = "SELECT id, name, price, description, image, hover_image FROM products WHERE id = $id LIMIT 1";
 $result = $conn->query($sql);
 
 if ($result->num_rows === 0) {
@@ -21,8 +18,85 @@ if ($result->num_rows === 0) {
 
 $product = $result->fetch_assoc();
 
-$activeCategory = strtolower(str_replace(' ', '', $product['category']));
-$imageToShow = ($view === 'back') ? $product['hover_image'] : $product['image'];
+// It's good practice to sanitize and validate $_GET['view'] more robustly
+// For now, keeping it simple as per your code
+$imageToShow = ($view === 'back' && !empty($product['hover_image'])) ? $product['hover_image'] : $product['image'];
+
+// --- Handle Add to Cart / Buy Now form submission ---
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'add_to_cart') {
+    if (!isset($_SESSION['user_id'])) {
+        // Store current product page URL to redirect back after sign-in
+        $_SESSION['redirect_url'] = $_SERVER['REQUEST_URI'];
+        header('Location: signin.php');
+        exit();
+    }
+    
+    $user_id = $_SESSION['user_id'];
+    $product_id = intval($_POST['product_id']);
+    $size = htmlspecialchars($_POST['size']);
+    $quantity = intval($_POST['quantity']);
+    // Check for the 'buy_now' flag from the form
+    $is_buy_now = isset($_POST['buy_now']) && $_POST['buy_now'] === '1';
+
+    // Basic validation for quantity
+    if ($quantity <= 0) {
+        $quantity = 1;
+    }
+
+    // Basic validation for size
+    if (empty($size)) {
+        $_SESSION['message'] = "Please select a size before adding to bag or buying.";
+        $_SESSION['message_type'] = "error";
+        header("Location: product.php?id=$id");
+        exit();
+    }
+
+    // If it's a "Buy Now" action, clear the user's cart first
+    if ($is_buy_now) {
+        $clear_stmt = $conn->prepare("DELETE FROM cart WHERE user_id = ?");
+        $clear_stmt->bind_param("i", $user_id);
+        $clear_stmt->execute();
+        $clear_stmt->close();
+    }
+
+    // Check if product already exists in cart for this user and size
+    // Note: If 'buy_now' cleared the cart, this 'SELECT' will likely find nothing
+    // unless the same item was just added back (which is expected for buy now).
+    $stmt = $conn->prepare("SELECT id, quantity FROM cart WHERE user_id = ? AND product_id = ? AND size = ?");
+    $stmt->bind_param("iis", $user_id, $product_id, $size);
+    $stmt->execute();
+    $stmt->store_result();
+
+    if ($stmt->num_rows > 0) {
+        // Update quantity if item already exists (relevant for "Add to Bag")
+        $stmt->bind_result($cart_item_id, $current_quantity);
+        $stmt->fetch();
+        $new_quantity = $current_quantity + $quantity;
+        $update_stmt = $conn->prepare("UPDATE cart SET quantity = ? WHERE id = ?");
+        $update_stmt->bind_param("ii", $new_quantity, $cart_item_id);
+        $update_stmt->execute();
+        $update_stmt->close();
+    } else {
+        // Insert new item into cart
+        $insert_stmt = $conn->prepare("INSERT INTO cart (user_id, product_id, quantity, size) VALUES (?, ?, ?, ?)");
+        $insert_stmt->bind_param("iiis", $user_id, $product_id, $quantity, $size);
+        $insert_stmt->execute();
+        $insert_stmt->close();
+    }
+    $stmt->close();
+
+    // Check if we need to redirect to payment (for "Buy Now")
+    if ($is_buy_now) {
+        header('Location: payment.php'); // Redirect directly to payment page
+        exit();
+    } else {
+        // Set success message for "Add to Bag"
+        $_SESSION['message'] = "Item added to bag successfully! ✅";
+        $_SESSION['message_type'] = "success";
+        header("Location: product.php?id=$id"); // Redirect back to product page
+        exit();
+    }
+}
 ?>
 
 <!DOCTYPE html>
@@ -31,9 +105,9 @@ $imageToShow = ($view === 'back') ? $product['hover_image'] : $product['image'];
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title><?= htmlspecialchars($product['name']) ?> | Etier Clothing</title>
-    <?php include 'header.php'; ?>
+    <?php include 'header.php'; // Ensure header.php is correctly linked ?>
     <style>
-        /* Your existing CSS here */
+        /* Your existing CSS (no changes needed here for functionality) */
         body {
             font-family: 'Proxima Nova', sans-serif;
             background-color: #f9f9f9;
@@ -49,7 +123,7 @@ $imageToShow = ($view === 'back') ? $product['hover_image'] : $product['image'];
         }
 
         .page-wrapper {
-            padding-top: 190px; /* default top padding for desktop */
+            padding-top: 200px; /* default top padding for desktop */
             padding-bottom: 90px;
         }
 
@@ -160,7 +234,7 @@ $imageToShow = ($view === 'back') ? $product['hover_image'] : $product['image'];
             border: none;
             padding: 15px 40px;
             font-weight: bold;
-            border-radius: 44px;
+            border-radius: 4px;
             cursor: pointer;
             transition: background-color 0.3s ease, color 0.3s ease;
         }
@@ -199,7 +273,6 @@ $imageToShow = ($view === 'back') ? $product['hover_image'] : $product['image'];
             border: 1px solid #f5c6cb;
         }
 
-
         @media (max-width: 768px) {
             .product-page {
                 flex-direction: column;
@@ -221,7 +294,7 @@ $imageToShow = ($view === 'back') ? $product['hover_image'] : $product['image'];
             }
 
             .page-wrapper {
-                padding-top: 260px;
+                padding-top: 130px;
             }
         }
     </style>
@@ -233,15 +306,17 @@ $imageToShow = ($view === 'back') ? $product['hover_image'] : $product['image'];
                 <div class="gallery-section">
                     <div class="thumbnails">
                         <a href="?id=<?= $id ?>&view=front" class="<?= ($view === 'front') ? 'active' : '' ?>">
-                            <img src="../assets/<?= $product['image'] ?>" alt="Front">
+                            <img src="../assets/<?= htmlspecialchars($product['image']) ?>" alt="Front">
                         </a>
+                        <?php if (!empty($product['hover_image'])): ?>
                         <a href="?id=<?= $id ?>&view=back" class="<?= ($view === 'back') ? 'active' : '' ?>">
-                            <img src="../assets/<?= $product['hover_image'] ?>" alt="Back">
+                            <img src="../assets/<?= htmlspecialchars($product['hover_image']) ?>" alt="Back">
                         </a>
+                        <?php endif; ?>
                     </div>
 
                     <div class="main-image">
-                        <img src="../assets/<?= $imageToShow ?>" alt="<?= htmlspecialchars($product['name']) ?>">
+                        <img src="../assets/<?= htmlspecialchars($imageToShow) ?>" alt="<?= htmlspecialchars($product['name']) ?>">
                     </div>
                 </div>
 
@@ -257,16 +332,39 @@ $imageToShow = ($view === 'back') ? $product['hover_image'] : $product['image'];
                         </p>
                     </div>
 
-                    <form id="addToCartForm" action="cart.php" method="POST">
+                    <form id="addToCartForm" action="product.php?id=<?= $id ?>" method="POST">
                         <input type="hidden" name="action" value="add_to_cart">
-                        <input type="hidden" name="product_id" value="<?= $product['id'] ?>">
+                        <input type="hidden" name="product_id" value="<?= htmlspecialchars($product['id']) ?>">
                         <input type="hidden" name="quantity" value="1">
                         <input type="hidden" name="size" id="selectedSize" value="">
+                        
                         <div class="sizes">
                             <strong>Size:</strong><br>
-                            <?php foreach (['XS', 'S', 'M', 'L', 'XL'] as $size): ?>
-                                <button type="button" class="size-btn" data-size="<?= $size ?>"><?= $size ?></button>
-                            <?php endforeach; ?>
+                            <?php
+                            // Assume these are the default sizes if no product_sizes table exists.
+                            // If you have a product_sizes table, you'd fetch them here.
+                            $available_sizes = ['XS', 'S', 'M', 'L', 'XL']; // Example fixed sizes
+
+                            // If you have a product_sizes table uncomment this and comment the above line:
+                            /*
+                            $stmt_sizes = $conn->prepare("SELECT size FROM product_sizes WHERE product_id = ? ORDER BY FIELD(size, 'XS', 'S', 'M', 'L', 'XL', 'XXL')");
+                            $stmt_sizes->bind_param("i", $product['id']);
+                            $stmt_sizes->execute();
+                            $result_sizes = $stmt_sizes->get_result();
+                            $available_sizes = [];
+                            while ($row_size = $result_sizes->fetch_assoc()) {
+                                $available_sizes[] = $row_size['size'];
+                            }
+                            $stmt_sizes->close();
+                            */
+                            ?>
+                            <?php if (!empty($available_sizes)): ?>
+                                <?php foreach ($available_sizes as $size): ?>
+                                    <button type="button" class="size-btn" data-size="<?= htmlspecialchars($size) ?>"><?= htmlspecialchars($size) ?></button>
+                                <?php endforeach; ?>
+                            <?php else: ?>
+                                <span style="color: #777;">No sizes available for this product.</span>
+                            <?php endif; ?>
                         </div>
 
                         <div class="actions">
@@ -276,8 +374,8 @@ $imageToShow = ($view === 'back') ? $product['hover_image'] : $product['image'];
                     </form>
 
                     <?php if (isset($_SESSION['message'])): ?>
-                        <div class="product-message <?= $_SESSION['message_type'] ?>">
-                            <?= $_SESSION['message'] ?>
+                        <div class="product-message <?= htmlspecialchars($_SESSION['message_type']) ?>">
+                            <?= htmlspecialchars($_SESSION['message']) ?>
                         </div>
                         <?php
                         unset($_SESSION['message']); // Clear the message after displaying
@@ -290,16 +388,15 @@ $imageToShow = ($view === 'back') ? $product['hover_image'] : $product['image'];
         </div>
     </div>
 
-    <?php include 'footer.php'; ?>
+    <?php include 'footer.php'; // Ensure footer.php is correctly linked ?>
 
     <script>
         document.addEventListener("DOMContentLoaded", function() {
             const sizeButtons = document.querySelectorAll('.size-btn');
             const selectedSizeInput = document.getElementById('selectedSize');
             const addToBagBtn = document.getElementById('addToBagBtn');
-            const buyNowBtn = document.getElementById('buyNowBtn'); // Get the Buy Now button
-
-            const isUserLoggedIn = <?= json_encode($is_logged_in) ?>; // Pass PHP variable to JS
+            const buyNowBtn = document.getElementById('buyNowBtn');
+            const addToCartForm = document.getElementById('addToCartForm');
 
             sizeButtons.forEach(button => {
                 button.addEventListener('click', function() {
@@ -312,13 +409,9 @@ $imageToShow = ($view === 'back') ? $product['hover_image'] : $product['image'];
                 });
             });
 
-            // Handle Add to Bag button click
+            // Prevent form submission if no size is selected for Add to Bag
             addToBagBtn.addEventListener('click', function(event) {
-                if (!isUserLoggedIn) {
-                    event.preventDefault(); // Stop form submission
-                    alert('Please sign in to add items to your bag.');
-                    window.location.href = 'signin.php'; // Redirect to signin page
-                } else if (selectedSizeInput.value === '') {
+                if (selectedSizeInput.value === '') {
                     event.preventDefault(); // Stop form submission
                     alert('Please select a size before adding to bag.');
                 }
@@ -326,21 +419,26 @@ $imageToShow = ($view === 'back') ? $product['hover_image'] : $product['image'];
 
             // Handle Buy Now button click
             buyNowBtn.addEventListener('click', function(event) {
-                event.preventDefault(); // Always prevent default for custom logic
-                if (!isUserLoggedIn) {
-                    alert('Please sign in to proceed with your purchase.');
-                    window.location.href = 'signin.php'; // Redirect to signin page
-                } else if (selectedSizeInput.value === '') {
-                    alert('Please select a size before proceeding to checkout.');
-                } else {
-                    // If logged in and size is selected, submit the form to cart.php
-                    // The cart.php will then handle adding the item and redirecting to payment.php
-                    const form = document.getElementById('addToCartForm');
-                    form.action = "cart.php?redirect_to_payment=true"; // Add a flag for cart.php
-                    form.submit();
+                if (selectedSizeInput.value === '') {
+                    alert('Please select a size before proceeding.');
+                    return; // Stop the process
                 }
+                
+                // Create a hidden input to signal this is a "Buy Now" action
+                const buyNowInput = document.createElement('input');
+                buyNowInput.type = 'hidden';
+                buyNowInput.name = 'buy_now';
+                buyNowInput.value = '1';
+                addToCartForm.appendChild(buyNowInput);
+                
+                // Submit the form
+                addToCartForm.submit();
             });
         });
     </script>
 </body>
 </html>
+<?php
+// Close the database connection ONLY after all database operations are complete.
+$conn->close();
+?>
