@@ -249,12 +249,14 @@ $imageToShow = ($view === 'back') ? $product['hover_image'] : $product['image'];
       }
 
       .main-image img {
-        width: 100%;
+        justify-content: center;
+        margin-left: 60px;
+        width: 65%;
         height: auto;
       }
 
       .page-wrapper {
-        padding-top: 260px;
+        padding-top: 100px;
       }
     }
   </style>
