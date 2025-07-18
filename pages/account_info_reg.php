@@ -55,7 +55,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['register'])) {
             );
             if ($stmt->execute()) {
                 $to = $email;
-                $subject = "Welcome to Etier – Your Account Has Been Successfully Created!";
+                $subject = "Welcome to ETIER – Your Account Has Been Successfully Created!";
 
                 $body = "
                 <html>
@@ -73,7 +73,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['register'])) {
                 </div>
                   <div class='content'>
                     <p>Dear <strong>$first_name</strong>,</p>
-                    <p>We’re excited to welcome you to <strong>Etier</strong> – your go-to destination for stylish, high-quality apparel. Your account has been successfully created.</p>
+                    <p>We’re excited to welcome you to <strong>ETIER</strong> – your go-to destination for stylish, high-quality apparel. Your account has been successfully created.</p>
 
                     <p>As a registered member, you now have access to:</p>
                     <ul>
@@ -89,10 +89,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['register'])) {
                     <p>Thank you for choosing Etier. We’re glad to have you with us!</p>
 
                     <p>Warm regards,<br>
-                    <strong>The Etier Team</strong></p>
+                    <strong>The ETIER Team</strong></p>
                   </div>
                   <div class='footer'>
-                    &copy; 2025 BeyondOne | Etier Clothing<br>
+                    &copy; 2025 BeyondOne | ETIER Clothing<br>
                     This website is for educational purposes only and is a final project requirement.
                   </div>
                 </body>
