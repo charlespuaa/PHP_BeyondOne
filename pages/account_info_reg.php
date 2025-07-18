@@ -90,7 +90,6 @@ include 'header.php';
             text-align: center;
             margin-bottom: 30px;
             font-size: 2rem;
-            color: #E6BD37;
         }
         body {
             font-family: Arial, sans-serif;
@@ -130,7 +129,7 @@ include 'header.php';
             background: #F9F9F9;
             box-sizing: border-box;
         }
-        input[type="submit"], .signin-button {
+        input[type="submit"] {
             background: #E6BD37;
             color: #fff;
             font-weight: bold;
@@ -143,7 +142,7 @@ include 'header.php';
             display: block;
             transition: background 0.3s, color 0.3s, border 0.3s;
         }
-        input[type="submit"]:hover, .signin-button:hover {
+        input[type="submit"]:hover {
             background: #fff;
             color: #E6BD37;
             border: 2px solid #E6BD37;
@@ -156,21 +155,6 @@ include 'header.php';
         }
         .success { color: green; }
         .error-text { color: red; }
-        .back-container {
-            max-width: 500px;
-            margin: 20px auto;
-            padding: 15px;
-            border: 2px solid #E6BD37;
-            border-radius: 10px;
-            text-align: center;
-            background: #fff;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-            transition: transform 0.2s, box-shadow 0.2s;
-        }
-        .back-container:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 6px 18px rgba(0,0,0,0.15);
-        }
     </style>
 </head>
 <body>
@@ -202,12 +186,10 @@ include 'header.php';
     </fieldset>
 </form>
 
-<div class="back-container">
-    <p>Already have an account?</p>
-    <form action="signin.php" method="get">
-        <button type="submit" class="signin-button">Go back to sign in</button>
-    </form>
-</div>
+<p style="text-align:center; margin-top: 20px;">
+    Already have an account?
+    <a href="signin.php" style="color: #E6BD37; text-decoration: underline;">Go back to sign in</a>
+</p>
 
 </body>
 </html>
