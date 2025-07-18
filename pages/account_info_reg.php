@@ -54,7 +54,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['register'])) {
                 $username, $hashed_password, $email, $contact_number
             );
             if ($stmt->execute()) {
-                // Send email
                 $to = $email;
                 $subject = "Welcome to Etier!";
                 $body = "<html><body><h3>Hello $first_name!</h3><p>This is to inform you that you created an account in Etier. You can now log in to our website and enjoy shopping to your heart's content!</p></body></html>";
@@ -90,7 +89,6 @@ include 'header.php';
             text-align: center;
             margin-bottom: 30px;
             font-size: 2rem;
-            color: #E6BD37;
         }
         body {
             font-family: Arial, sans-serif;
@@ -104,7 +102,8 @@ include 'header.php';
             border-radius: 10px;
             padding: 20px;
             background: #fff;
-            max-width: 500px;
+            width: 90%;
+            max-width: 480px;
             margin: auto;
             box-shadow: 0 4px 12px rgba(0,0,0,0.1);
             transition: transform 0.2s, box-shadow 0.2s;
@@ -116,61 +115,86 @@ include 'header.php';
         legend {
             font-weight: bold;
             color: #E6BD37;
+            font-size: 1.2rem;
         }
         label {
             display: block;
             margin-top: 15px;
+            font-size: 1rem;
         }
         input[type="text"], input[type="password"] {
             width: 100%;
-            padding: 8px;
-            margin-top: 5px;
+            padding: 10px;
+            margin-top: 6px;
+            font-size: 1rem;
             border: 1px solid #ccc;
             border-radius: 5px;
             background: #F9F9F9;
             box-sizing: border-box;
         }
-        input[type="submit"], .signin-button {
+        input[type="submit"] {
             background: #E6BD37;
             color: #fff;
             font-weight: bold;
             margin-top: 20px;
-            padding: 12px;
+            padding: 14px;
+            font-size: 1.1rem;
             width: 100%;
             border: none;
             border-radius: 5px;
             cursor: pointer;
-            display: block;
             transition: background 0.3s, color 0.3s, border 0.3s;
         }
-        input[type="submit"]:hover, .signin-button:hover {
+        input[type="submit"]:hover {
             background: #fff;
             color: #E6BD37;
             border: 2px solid #E6BD37;
         }
         .success, .error-text {
             text-align: center;
-            padding: 5px;
-            margin-top: 10px;
-            font-size: 14px;
+            padding: 10px;
+            margin-top: 15px;
+            font-size: 1rem;
         }
         .success { color: green; }
         .error-text { color: red; }
-        .back-container {
-            max-width: 500px;
-            margin: 20px auto;
-            padding: 15px;
-            border: 2px solid #E6BD37;
-            border-radius: 10px;
-            text-align: center;
-            background: #fff;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-            transition: transform 0.2s, box-shadow 0.2s;
-        }
-        .back-container:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 6px 18px rgba(0,0,0,0.15);
-        }
+
+    /* responsiveness across devices */
+        @media (max-width: 768px) {
+    h1 {
+        font-size: 1.7rem;
+    }
+    fieldset {
+        padding: 16px;
+        margin: 10px auto;
+    }
+    input[type="submit"] {
+        font-size: 1rem;
+        padding: 10px;
+    }
+}
+
+@media (max-width: 480px) {
+    h1 {
+        font-size: 1.5rem;
+    }
+    fieldset {
+        padding: 14px;
+        margin: 8px auto;
+    }
+    input[type="text"], input[type="password"] {
+        padding: 6px;
+        font-size: 0.9rem;
+    }
+    input[type="submit"] {
+        font-size: 0.95rem;
+        padding: 9px;
+    }
+    label {
+        font-size: 0.95rem;
+    }
+}
+
     </style>
 </head>
 <body>
@@ -202,12 +226,10 @@ include 'header.php';
     </fieldset>
 </form>
 
-<div class="back-container">
-    <p>Already have an account?</p>
-    <form action="signin.php" method="get">
-        <button type="submit" class="signin-button">Go back to sign in</button>
-    </form>
-</div>
+<p style="text-align:center; margin-top: 20px;">
+    Already have an account?
+    <a href="signin.php" style="color: #E6BD37; text-decoration: underline;">Sign in</a>
+</p>
 
 </body>
 </html>

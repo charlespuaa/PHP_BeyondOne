@@ -345,7 +345,7 @@
       <a href="cart.php"><i class="fas fa-shopping-bag"></i></a> </div>
   </div>
 
-  <?php if ($currentPage !== 'about_us.php' && $currentPage !== 'signin.php'): ?>
+  <?php if (!in_array($currentPage, ['about_us.php', 'signin.php', 'account_info_reg.php', 'personal_info_reg.php', 'address_info_reg.php'])): ?>
     <nav class="main-nav" id="mainNav">
       <?php
         $categories = [
