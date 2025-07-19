@@ -223,7 +223,7 @@ while ($row = $result->fetch_assoc()) {
     }
 
     #jackets .image-container {
-        height: 350px;
+        height: 400px;
     }
 
     #bottoms .image-container {
